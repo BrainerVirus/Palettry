@@ -1,0 +1,21 @@
+{
+	"explorer.fileNesting.enabled": true,
+	"explorer.fileNesting.expand": false,
+	"explorer.fileNesting.patterns": {
+		"package.json": "pnpm-lock.yaml, package-lock.json, yarn.lock",
+		".prettierrc.mjs": ".prettierignore",
+		"README.md": "CONTRIBUTING.md, CHANGELOG.md",
+		".eslintrc.json": ".eslintignore"
+	},
+	"editor.linkedEditing": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true,
+	"editor.quickSuggestions": {
+		"strings": "on"
+	},
+	"files.associations": {
+		"*.svg": "html",
+		"*.css": "tailwindcss"
+	},
+	"tailwindCSS.classFunctions": ["tw", "clsx", "cva", "cx", "tw\\.[a-z-]+"]
+}
