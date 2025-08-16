@@ -136,14 +136,38 @@ export class GenerationMethods {
 			return {
 				name: "Invalid Palette",
 				description: `Failed to generate: ${(error as Error).message}`,
-				tonalScale: [],
+				tonalScale: [
+					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0 },
+				],
 				semanticColors: {
 					success: { color: "", foreground: "" },
 					warning: { color: "", foreground: "" },
 					error: { color: "", foreground: "" },
 					info: { color: "", foreground: "" },
 				},
-				neutralScale: [],
+				neutralScale: [
+					{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0 },
+				],
 			};
 		}
 	}
