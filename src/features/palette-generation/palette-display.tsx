@@ -58,7 +58,7 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 									<div className="text-muted-foreground text-center font-mono text-xs">
 										{(() => {
 											const match = colors.color.match(/oklch\((.+?)%/);
-											return match ? `${match[1]}%` : "";
+											return match ? `${match[1]}%` : "0%";
 										})()}
 									</div>
 								</div>
@@ -87,7 +87,7 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 									<div className="text-muted-foreground text-center font-mono text-xs">
 										{(() => {
 											const match = shade.color.match(/oklch\((.+?)%/);
-											return match ? `${match[1]}%` : "";
+											return match ? `${match[1]}%` : "0%";
 										})()}
 									</div>
 								</div>
