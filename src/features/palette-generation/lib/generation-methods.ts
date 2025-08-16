@@ -1,38 +1,43 @@
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import type { ColorShade, SemanticColors, PaletteMethod } from "@/features/shared/types/global";
 import { HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
-import { LIGHTNESS_PROGRESSION } from "@/features/palette-generation/constants/lightness-progression";
+import {
+	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
+	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
+} from "@/features/palette-generation/constants/lightness-progression";
 import { clampChroma } from "culori";
 
 export class GenerationMethods {
 	static generateTonalScale(primaryColor: string): ColorShade[] {
 		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
 
-		const tonalScale: ColorShade[] = LIGHTNESS_PROGRESSION.map(({ scale, l: lightnessOffset }) => {
-			const currentL = ColorMath.clamp(baseL + lightnessOffset, 0, 100);
-			let adjustedChroma;
+		const tonalScale: ColorShade[] = PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
+			({ scale, l: lightnessOffset }) => {
+				const currentL = ColorMath.clamp(baseL + lightnessOffset, 0, 100);
+				let adjustedChroma;
 
-			if (currentL === 0 || baseL === 0) {
-				adjustedChroma = 0.005;
-			} else if (currentL === baseL) {
-				adjustedChroma = baseC;
-			} else {
-				adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
+				if (currentL === 0 || baseL === 0) {
+					adjustedChroma = 0.005;
+				} else if (currentL === baseL) {
+					adjustedChroma = baseC;
+				} else {
+					adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
+				}
+
+				const inGamutChroma = clampChroma(
+					{ l: currentL / 100, c: adjustedChroma, h: baseH, mode: "oklch" },
+					"oklch"
+				).c;
+
+				return {
+					scale: `primary-${scale}`,
+					color: ColorMath.formatOklch(currentL, inGamutChroma, baseH),
+					l: currentL,
+					c: inGamutChroma,
+					h: baseH,
+				};
 			}
-
-			const inGamutChroma = clampChroma(
-				{ l: currentL / 100, c: adjustedChroma, h: baseH, mode: "oklch" },
-				"oklch"
-			).c;
-
-			return {
-				scale: `primary-${scale}`,
-				color: ColorMath.formatOklch(currentL, inGamutChroma, baseH),
-				l: currentL,
-				c: inGamutChroma,
-				h: baseH,
-			};
-		});
+		);
 
 		return tonalScale;
 	}
@@ -102,19 +107,19 @@ export class GenerationMethods {
 	static generateNeutralScale(primaryColor: string): ColorShade[] {
 		const { c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
 		const neutralChroma = ColorMath.clamp(baseC * 0.1, 0.005, 0.03);
-		const neutralLightnesses = [98, 95, 88, 78, 65, 52, 42, 32, 22, 15, 8];
-		const scaleNames = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
 
-		const neutralScale: ColorShade[] = neutralLightnesses.map((l, index) => {
-			const color = ColorMath.formatOklch(l, neutralChroma, baseH);
-			return {
-				scale: `neutral-${scaleNames[index]}`,
-				color,
-				l,
-				c: neutralChroma,
-				h: baseH,
-			};
-		});
+		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
+			({ scale, l }) => {
+				const color = ColorMath.formatOklch(l, neutralChroma, baseH);
+				return {
+					scale: `neutral-${scale}`,
+					color,
+					l,
+					c: neutralChroma,
+					h: baseH,
+				};
+			}
+		);
 		return neutralScale;
 	}
 
