@@ -1,28 +1,35 @@
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import type { ColorShade, SemanticColors, PaletteMethod } from "@/features/shared/types/global";
-
 import { HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
 import { LIGHTNESS_PROGRESSION } from "@/features/palette-generation/constants/lightness-progression";
-import { WCAG_CONSTRAINTS } from "@/features/palette-generation/constants/wcag-constraints";
+import { clampChroma } from "culori";
 
 export class GenerationMethods {
-	/**
-	 * Step 1: Generate tonal scale
-	 */
 	static generateTonalScale(primaryColor: string): ColorShade[] {
 		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
 
-		const tonalScale: ColorShade[] = LIGHTNESS_PROGRESSION.map(({ scale, l }) => {
-			// Chroma adjustment formula: Base_Chroma × (Current_Lightness / Base_Lightness)^0.7
-			const chromaFactor = Math.pow((baseL + l) / baseL, 0.7);
-			const adjustedChroma = baseC * chromaFactor;
-			const clampedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+		const tonalScale: ColorShade[] = LIGHTNESS_PROGRESSION.map(({ scale, l: lightnessOffset }) => {
+			const currentL = ColorMath.clamp(baseL + lightnessOffset, 0, 100);
+			let adjustedChroma;
+
+			if (currentL === 0 || baseL === 0) {
+				adjustedChroma = 0.005;
+			} else if (currentL === baseL) {
+				adjustedChroma = baseC;
+			} else {
+				adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
+			}
+
+			const inGamutChroma = clampChroma(
+				{ l: currentL / 100, c: adjustedChroma, h: baseH, mode: "oklch" },
+				"oklch"
+			).c;
 
 			return {
 				scale: `primary-${scale}`,
-				color: ColorMath.formatOklch(baseL + l, clampedChroma, baseH),
-				l: baseL + l,
-				c: clampedChroma,
+				color: ColorMath.formatOklch(currentL, inGamutChroma, baseH),
+				l: currentL,
+				c: inGamutChroma,
 				h: baseH,
 			};
 		});
@@ -30,12 +37,7 @@ export class GenerationMethods {
 		return tonalScale;
 	}
 
-	/**
-	 * Step 2: Generate semantic status colors
-	 */
-
-	static generateSemanticStatusColors(primaryColor: string): SemanticColors {
-		// Parse primary color
+	static generateSemanticColors(primaryColor: string): SemanticColors {
 		const { l: baseL, c: baseC } = ColorMath.parseOklch(primaryColor);
 		const targetWeight = ColorMath.calculateWeight(baseL, baseC);
 		const targetEnergy = ColorMath.calculateEnergy(baseL, baseC);
@@ -48,112 +50,92 @@ export class GenerationMethods {
 				(typeof HUE_CONSTRAINTS)[keyof typeof HUE_CONSTRAINTS],
 			][]
 		).forEach(([name, constraints]) => {
-			// Start with mid values
 			let L = (constraints.l[0] + constraints.l[1]) / 2;
 			let C = (constraints.c[0] + constraints.c[1]) / 2;
 
-			// Try to match weight first, within constraints
-			let weight = ColorMath.calculateWeight(L, C);
-			if (weight < targetWeight * 0.85) {
-				// Try increasing chroma if possible
-				if (C < constraints.c[1]) {
-					C = Math.min(constraints.c[1], targetWeight / (100 - L));
+			for (let i = 0; i < 5; i++) {
+				const currentWeight = ColorMath.calculateWeight(L, C);
+				const currentEnergy = ColorMath.calculateEnergy(L, C);
+				if (currentWeight < targetWeight * 0.9) {
+					L = Math.max(constraints.l[0], L - 5);
+					C = Math.min(constraints.c[1], C * 1.1);
+				} else if (currentWeight > targetWeight * 1.1) {
+					L = Math.min(constraints.l[1], L + 5);
+					C = Math.max(constraints.c[0], C * 0.9);
 				}
-				// If still not enough, try lowering L within constraints
-				weight = ColorMath.calculateWeight(L, C);
-				if (weight < targetWeight * 0.85 && L > constraints.l[0]) {
-					L = Math.max(constraints.l[0], 100 - targetWeight / C);
+				if (currentEnergy < targetEnergy * 0.9) {
+					C = Math.min(constraints.c[1], C * 1.05);
+				} else if (currentEnergy > targetEnergy * 1.1) {
+					C = Math.max(constraints.c[0], C * 0.95);
 				}
+				L = ColorMath.clamp(L, constraints.l[0], constraints.l[1]);
+				C = ColorMath.clamp(C, constraints.c[0], constraints.c[1]);
 			}
 
-			// Now try to match energy as well, within constraints
-			let energy = ColorMath.calculateEnergy(L, C);
-			if (energy < targetEnergy * 0.85) {
-				// Try increasing chroma if possible
-				if (C < constraints.c[1]) {
-					C = Math.min(constraints.c[1], targetEnergy / Math.pow(L / 50, 0.5));
-				}
-				// If still not enough, try lowering L within constraints
-				energy = ColorMath.calculateEnergy(L, C);
-				if (energy < targetEnergy * 0.85 && L > constraints.l[0]) {
-					L = Math.max(constraints.l[0], 50 * Math.pow(targetEnergy / C, 2));
-				}
-			}
+			const inGamutColor = clampChroma(
+				{ l: L / 100, c: C, h: constraints.hue, mode: "oklch" },
+				"oklch"
+			);
+			const finalL = inGamutColor.l * 100;
+			const finalC = inGamutColor.c;
+			const finalH = inGamutColor.h;
 
-			// Clamp values to constraints
-			L = Math.max(constraints.l[0], Math.min(constraints.l[1], L));
-			C = Math.max(constraints.c[0], Math.min(constraints.c[1], C));
+			const finalColorOklch = { l: finalL, c: finalC, h: finalH };
+			const finalColorString = ColorMath.formatOklch(finalL, finalC, finalH);
 
-			// Foreground: following WCAG
-			const contrast = WCAG_CONSTRAINTS.find((c) => c.contrast === 7);
-			if (contrast) {
-				const finalColor = ColorMath.formatOklch(L, C, constraints.hue);
-				const adjustedColor = ColorMath.adjustColor(ColorMath.parseOklch(finalColor), {
-					contrast: contrast.contrast,
-				});
-				const { l, c, h } = adjustedColor;
-				semanticColors[name] = {
-					color: finalColor,
-					foreground: ColorMath.formatOklch(l, c, h),
-				};
-			}
+			// Use the new, robust function to get the foreground color
+			const foregroundContrastTarget = 7.0; // Target AAA
+			const foregroundColor = ColorMath.getContrastingForegroundColor(
+				finalColorOklch,
+				foregroundContrastTarget
+			);
+
+			semanticColors[name] = {
+				color: finalColorString,
+				foreground: ColorMath.formatOklch(foregroundColor.l, foregroundColor.c, foregroundColor.h),
+			};
 		});
 
 		return semanticColors as SemanticColors;
 	}
 
-	/**
-	 * Step 3: Generate neural scale
-	 */
 	static generateNeutralScale(primaryColor: string): ColorShade[] {
-		console.log("[generateNeutralScale] Input primaryColor:", primaryColor);
 		const { c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
-		console.log("[generateNeutralScale] Parsed baseC:", baseC, "baseH:", baseH);
-
-		// Use very low chroma (0.005-0.03)
 		const neutralChroma = ColorMath.clamp(baseC * 0.1, 0.005, 0.03);
-		console.log("[generateNeutralScale] Calculated neutralChroma:", neutralChroma);
+		const neutralLightnesses = [98, 95, 88, 78, 65, 52, 42, 32, 22, 15, 8];
+		const scaleNames = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
 
-		// Use standard lightness progression
-		const lightnesses = LIGHTNESS_PROGRESSION.map(({ scale, l }) => {
+		const neutralScale: ColorShade[] = neutralLightnesses.map((l, index) => {
 			const color = ColorMath.formatOklch(l, neutralChroma, baseH);
-			console.log(`[generateNeutralScale] scale: neutral-${scale}, l: ${l}, color: ${color}`);
 			return {
-				scale: `neutral-${scale}`,
+				scale: `neutral-${scaleNames[index]}`,
 				color,
 				l,
 				c: neutralChroma,
 				h: baseH,
 			};
 		});
-
-		console.log("[generateNeutralScale] Generated neutral scale:", lightnesses);
-		return lightnesses;
+		return neutralScale;
 	}
 
-	/**
-	 * Generate all palette methods for a primary color
-	 */
 	static getAllMethods(primaryColor: string): PaletteMethod {
 		try {
-			// Validate input color
 			const parsed = ColorMath.parseOklch(primaryColor);
 			if (!ColorMath.validateOklch(parsed)) {
-				throw new Error("Invalid color values");
+				throw new Error("Invalid color values.");
 			}
-
 			return {
-				name: `palette-${primaryColor}`,
-				description: `Color palette generated from primary color ${primaryColor}`,
+				name: `Generated Palette for ${primaryColor}`,
+				description: `A complete color system derived from ${primaryColor}`,
 				tonalScale: this.generateTonalScale(primaryColor),
-				semanticColors: this.generateSemanticStatusColors(primaryColor),
+				semanticColors: this.generateSemanticColors(primaryColor),
 				neutralScale: this.generateNeutralScale(primaryColor),
 			};
 		} catch (error) {
-			console.error("Error generating palette methods:", error);
+			console.error("Error generating palette:", error);
 			return {
-				name: "invalid-palette",
-				description: "Color palette generation failed",
+				name: "Invalid Palette",
+				description: `Failed to generate: ${(error as Error).message}`,
 				tonalScale: [],
 				semanticColors: {
 					success: { color: "", foreground: "" },
