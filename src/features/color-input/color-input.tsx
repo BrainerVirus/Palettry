@@ -1,6 +1,6 @@
 import React from "react";
 // No longer need useSignal here!
-import { primaryColorSignal } from "@/features/palette-generation/store/palette-store";
+import { primaryColor } from "@/features/palette-generation/store/palette-store";
 
 const presets = [
 	"oklch(49.6% 0.272 303.89)",
@@ -11,11 +11,11 @@ const presets = [
 
 export default function ColorInput() {
 	const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-		primaryColorSignal.value = e.target.value;
+		primaryColor.value = e.target.value;
 	};
 
 	const handlePreset = (preset: string) => {
-		primaryColorSignal.value = preset;
+		primaryColor.value = preset;
 	};
 
 	return (
@@ -28,7 +28,7 @@ export default function ColorInput() {
 					type="text"
 					id="color-input"
 					placeholder="oklch(49.6% 0.272 303.89)"
-					value={primaryColorSignal.value}
+					value={primaryColor.value}
 					onChange={handleInput}
 					className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring mt-2 flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 				/>
