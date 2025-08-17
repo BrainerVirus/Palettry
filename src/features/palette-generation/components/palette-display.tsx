@@ -1,6 +1,6 @@
 import React from "react";
-import Card from "@/features/shared/components/card/card"; // React Card component
-import Badge from "@/features/shared/components/badge/badge"; // React Badge component
+import Card from "@/features/shared/components/card/card";
+import Badge from "@/features/shared/components/badge/badge";
 import type { Palette } from "@/features/shared/types/global";
 
 export interface PaletteDisplayProps {
