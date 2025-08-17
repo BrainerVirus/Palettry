@@ -1,4 +1,3 @@
-// features/design-system-export/types/export.ts
 export interface CSSVariables {
 	[key: string]: string;
 }
