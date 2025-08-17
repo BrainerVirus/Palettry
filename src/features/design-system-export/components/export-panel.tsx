@@ -66,22 +66,15 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 				</div>
 				<div className="space-y-3">
 					<div className="space-y-3 rounded-lg border p-4">
-						<div className="flex items-center justify-between">
-							<h4 className="font-medium">{palette?.name}</h4>
-							<div className="flex gap-2">
-								<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
-									<Copy className="mr-2 h-4 w-4" />
-									Copy CSS
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={(e) => handleCopy("tailwind-config", e)}
-								>
-									<Download className="mr-2 h-4 w-4" />
-									Tailwind Config
-								</Button>
-							</div>
+						<div className="flex gap-2">
+							<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
+								<Copy className="mr-2 h-4 w-4" />
+								Copy CSS
+							</Button>
+							<Button size="sm" variant="outline" onClick={(e) => handleCopy("tailwind-config", e)}>
+								<Download className="mr-2 h-4 w-4" />
+								Tailwind Config
+							</Button>
 						</div>
 						<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
 							<pre>{cssSnippet}</pre>
