@@ -1,5 +1,5 @@
 import { signal, effect } from "@preact/signals-react";
-import { GenerationMethods } from "@/features/palette-generation/lib/generation-methods";
+import { PaletteBuilder } from "@/features/palette-generation/lib/palette-builder";
 import type { Palette } from "@/features/shared/types/global";
 
 // Reactive signal for the primary color input
@@ -57,8 +57,5 @@ export const setPalette = (value: Palette) => {
 };
 
 effect(() => {
-	console.log("Primary color changed:", primaryColor.value);
-	palette.value = GenerationMethods.generatePalette(primaryColor.value);
-
-	console.log("Generated palette:", palette.value);
+	palette.value = PaletteBuilder.buildPalette(primaryColor.value);
 });
