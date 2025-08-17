@@ -67,6 +67,35 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 					</div>
 				</div>
 
+				{/* Charts Colors */}
+				<div>
+					<h4 className="mb-2 text-sm font-medium">Charts Colors</h4>
+					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+						{method.chartScale.map((shade) => (
+							<div key={shade.scale} className="space-y-2">
+								{" "}
+								{/* `key` is crucial here */}
+								<div className="text-xs font-medium capitalize">{shade.scale}</div>
+								<div className="space-y-1">
+									<div
+										className="hover:ring-ring flex h-8 cursor-pointer items-center justify-center rounded border text-xs font-medium transition-all hover:ring-2"
+										style={{ background: shade.color }}
+										title={`${shade.scale}: ${shade.color}`}
+									>
+										Aa
+									</div>
+									<div className="text-muted-foreground text-center font-mono text-xs">
+										{(() => {
+											const match = shade.color.match(/oklch\((.+?)%/);
+											return match ? `${match[1]}%` : "0%";
+										})()}
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+
 				{/* Neutral Colors */}
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Neutral Colors</h4>
