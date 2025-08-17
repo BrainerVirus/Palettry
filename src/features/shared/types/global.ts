@@ -25,7 +25,7 @@ export interface SemanticColors {
 	info: SemanticColorSet;
 }
 
-export interface PaletteMethod {
+export interface Palette {
 	name: string;
 	description: string;
 	tonalScale: ColorShade[];
