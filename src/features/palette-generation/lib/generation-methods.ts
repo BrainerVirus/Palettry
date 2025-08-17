@@ -1,5 +1,5 @@
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
-import type { ColorShade, SemanticColors, PaletteMethod } from "@/features/shared/types/global";
+import type { ColorShade, SemanticColors, Palette } from "@/features/shared/types/global";
 import { HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
 import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
@@ -172,7 +172,7 @@ export class GenerationMethods {
 		return chartScale;
 	}
 
-	static getAllMethods(primaryColor: string): PaletteMethod {
+	static generatePalette(primaryColor: string): Palette {
 		try {
 			const parsed = ColorMath.parseOklch(primaryColor);
 			if (!ColorMath.validateOklch(parsed)) {
