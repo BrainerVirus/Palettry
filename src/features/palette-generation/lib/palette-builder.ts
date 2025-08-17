@@ -1,21 +1,21 @@
+import { clampChroma } from "culori";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import type { ColorShade, SemanticColors, Palette } from "@/features/shared/types/global";
-import { HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
+import { SEMANTIC_HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
 import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
 	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
 } from "@/features/palette-generation/constants/lightness-progression";
-import { clampChroma } from "culori";
 
-export class GenerationMethods {
-	static generateTonalScale(primaryColor: string): ColorShade[] {
+export class PaletteBuilder {
+	static buildTonalScale(primaryColor: string): ColorShade[] {
 		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
 
 		const tonalScale: ColorShade[] = PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l: lightnessOffset }) => {
 				const currentL = ColorMath.clamp(baseL + lightnessOffset, 0, 100);
-				let adjustedChroma;
 
+				let adjustedChroma: number;
 				if (currentL === 0 || baseL === 0) {
 					adjustedChroma = 0.005;
 				} else if (currentL === baseL) {
@@ -42,7 +42,7 @@ export class GenerationMethods {
 		return tonalScale;
 	}
 
-	static generateSemanticColors(primaryColor: string): SemanticColors {
+	static buildSemanticColors(primaryColor: string): SemanticColors {
 		const { l: baseL, c: baseC } = ColorMath.parseOklch(primaryColor);
 		const targetWeight = ColorMath.calculateWeight(baseL, baseC);
 		const targetEnergy = ColorMath.calculateEnergy(baseL, baseC);
@@ -50,9 +50,9 @@ export class GenerationMethods {
 		const semanticColors: Partial<SemanticColors> = {};
 
 		(
-			Object.entries(HUE_CONSTRAINTS) as [
+			Object.entries(SEMANTIC_HUE_CONSTRAINTS) as [
 				keyof SemanticColors,
-				(typeof HUE_CONSTRAINTS)[keyof typeof HUE_CONSTRAINTS],
+				(typeof SEMANTIC_HUE_CONSTRAINTS)[keyof typeof SEMANTIC_HUE_CONSTRAINTS],
 			][]
 		).forEach(([name, constraints]) => {
 			let L = (constraints.l[0] + constraints.l[1]) / 2;
@@ -61,6 +61,7 @@ export class GenerationMethods {
 			for (let i = 0; i < 5; i++) {
 				const currentWeight = ColorMath.calculateWeight(L, C);
 				const currentEnergy = ColorMath.calculateEnergy(L, C);
+
 				if (currentWeight < targetWeight * 0.9) {
 					L = Math.max(constraints.l[0], L - 5);
 					C = Math.min(constraints.c[1], C * 1.1);
@@ -68,11 +69,13 @@ export class GenerationMethods {
 					L = Math.min(constraints.l[1], L + 5);
 					C = Math.max(constraints.c[0], C * 0.9);
 				}
+
 				if (currentEnergy < targetEnergy * 0.9) {
 					C = Math.min(constraints.c[1], C * 1.05);
 				} else if (currentEnergy > targetEnergy * 1.1) {
 					C = Math.max(constraints.c[0], C * 0.95);
 				}
+
 				L = ColorMath.clamp(L, constraints.l[0], constraints.l[1]);
 				C = ColorMath.clamp(C, constraints.c[0], constraints.c[1]);
 			}
@@ -81,6 +84,7 @@ export class GenerationMethods {
 				{ l: L / 100, c: C, h: constraints.hue, mode: "oklch" },
 				"oklch"
 			);
+
 			const finalL = inGamutColor.l * 100;
 			const finalC = inGamutColor.c;
 			const finalH = inGamutColor.h;
@@ -88,41 +92,38 @@ export class GenerationMethods {
 			const finalColorOklch = { l: finalL, c: finalC, h: finalH };
 			const finalColorString = ColorMath.formatOklch(finalL, finalC, finalH);
 
-			// Use the new, robust function to get the foreground color
-			const foregroundContrastTarget = 7.0; // Target AAA
-			const foregroundColor = ColorMath.getContrastingForegroundColor(
-				finalColorOklch,
-				foregroundContrastTarget
-			);
+			const targetContrast = 7.0; // AAA
+			const foreground = ColorMath.getContrastingForegroundColor(finalColorOklch, targetContrast);
 
 			semanticColors[name] = {
 				color: finalColorString,
-				foreground: ColorMath.formatOklch(foregroundColor.l, foregroundColor.c, foregroundColor.h),
+				foreground: ColorMath.formatOklch(foreground.l, foreground.c, foreground.h),
 			};
 		});
 
 		return semanticColors as SemanticColors;
 	}
-	static generateNeutralScale(primaryColor: string): ColorShade[] {
+
+	static buildNeutralScale(primaryColor: string): ColorShade[] {
 		const { c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
-		// Increase the lightness and reduce chroma for a whiter, softer neutral
+
 		const neutralChroma = ColorMath.clamp(baseC * 0.06, 0.002, 0.018);
 
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }) => {
-				// For base 50, force white using oklch
 				if (Number(scale) === 50) {
 					return {
 						scale: `neutral-${scale}`,
-						color: ColorMath.formatOklch(100, 0, 0), // oklch(100% 0 0)
+						color: ColorMath.formatOklch(100, 0, 0),
 						l: 100,
 						c: 0,
 						h: 0,
 					};
 				}
-				// Slightly boost lightness for extra whiteness
+
 				const adjustedL = Math.min(l + 4, 100);
 				const color = ColorMath.formatOklch(adjustedL, neutralChroma, baseH);
+
 				return {
 					scale: `neutral-${scale}`,
 					color,
@@ -132,33 +133,32 @@ export class GenerationMethods {
 				};
 			}
 		);
+
 		return neutralScale;
 	}
 
-	static generateChartScale(primaryColor: string): ColorShade[] {
+	static buildChartScale(primaryColor: string): ColorShade[] {
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 
-		// Use a Tetradic color scheme for high visual distinction
 		const hueOffsets = [30, 90, 180, 270, -30];
-		const personality = { l: 72, c: 0.18 }; // A good versatile personality for charts
+		const chartTone = { l: 72, c: 0.18 };
 
 		const chartScale: ColorShade[] = hueOffsets.map((offset, index) => {
-			const newHue = (baseH + offset + 360) % 360; // Ensure hue is always positive
+			const newHue = (baseH + offset + 360) % 360;
 
-			// Ensure the generated color is within the sRGB gamut
-			const inGamutColor = clampChroma(
+			const inGamut = clampChroma(
 				{
-					l: personality.l / 100,
-					c: personality.c,
+					l: chartTone.l / 100,
+					c: chartTone.c,
 					h: newHue,
 					mode: "oklch",
 				},
 				"oklch"
 			);
 
-			const finalL = inGamutColor.l * 100;
-			const finalC = inGamutColor.c;
-			const finalH = inGamutColor.h;
+			const finalL = inGamut.l * 100;
+			const finalC = inGamut.c;
+			const finalH = inGamut.h;
 
 			return {
 				scale: `chart-${index + 1}`,
@@ -172,22 +172,23 @@ export class GenerationMethods {
 		return chartScale;
 	}
 
-	static generatePalette(primaryColor: string): Palette {
+	static buildPalette(primaryColor: string): Palette {
 		try {
 			const parsed = ColorMath.parseOklch(primaryColor);
 			if (!ColorMath.validateOklch(parsed)) {
 				throw new Error("Invalid color values.");
 			}
+
 			return {
 				name: `Generated Palette for ${primaryColor}`,
 				description: `A complete color system derived from ${primaryColor}`,
-				tonalScale: this.generateTonalScale(primaryColor),
-				semanticColors: this.generateSemanticColors(primaryColor),
-				neutralScale: this.generateNeutralScale(primaryColor),
-				chartScale: this.generateChartScale(primaryColor),
+				tonalScale: this.buildTonalScale(primaryColor),
+				semanticColors: this.buildSemanticColors(primaryColor),
+				neutralScale: this.buildNeutralScale(primaryColor),
+				chartScale: this.buildChartScale(primaryColor),
 			};
 		} catch (error) {
-			console.error("Error generating palette:", error);
+			console.error("Error building palette:", error);
 			return {
 				name: "Invalid Palette",
 				description: `Failed to generate: ${(error as Error).message}`,
