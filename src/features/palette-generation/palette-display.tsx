@@ -1,29 +1,29 @@
 import React from "react";
 import Card from "@/features/shared/components/card/card"; // React Card component
 import Badge from "@/features/shared/components/badge/badge"; // React Badge component
-import type { PaletteMethod } from "@/features/shared/types/global";
+import type { Palette } from "@/features/shared/types/global";
 
 export interface PaletteDisplayProps {
-	method: PaletteMethod;
+	palette: Palette;
 }
 
-export default function PaletteDisplay({ method }: PaletteDisplayProps) {
+export default function PaletteDisplay({ palette }: PaletteDisplayProps) {
 	return (
 		<Card>
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
 					<div>
-						<h3 className="text-lg font-semibold">{method.name}</h3>
-						<p className="text-muted-foreground text-sm">{method.description}</p>
+						<h3 className="text-lg font-semibold">{palette.name}</h3>
+						<p className="text-muted-foreground text-sm">{palette.description}</p>
 					</div>
-					<Badge variant="outline">{method.tonalScale.length} shades</Badge>
+					<Badge variant="outline">{palette.tonalScale.length} shades</Badge>
 				</div>
 
 				{/* Tonal Scale */}
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Tonal Scale</h4>
 					<div className="grid grid-cols-11 gap-1">
-						{method.tonalScale.map((shade) => (
+						{palette.tonalScale.map((shade) => (
 							<div key={shade.scale} className="space-y-1">
 								{" "}
 								{/* `key` is crucial here */}
@@ -42,7 +42,7 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Semantic Colors</h4>
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-						{Object.entries(method.semanticColors).map(([name, colors]) => (
+						{Object.entries(palette.semanticColors).map(([name, colors]) => (
 							<div key={name} className="space-y-2">
 								{" "}
 								{/* `key` is crucial here */}
@@ -71,7 +71,7 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Charts Colors</h4>
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-						{method.chartScale.map((shade) => (
+						{palette.chartScale.map((shade) => (
 							<div key={shade.scale} className="space-y-2">
 								{" "}
 								{/* `key` is crucial here */}
@@ -100,7 +100,7 @@ export default function PaletteDisplay({ method }: PaletteDisplayProps) {
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Neutral Colors</h4>
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-						{method.neutralScale.map((shade) => (
+						{palette.neutralScale.map((shade) => (
 							<div key={shade.scale} className="space-y-2">
 								{" "}
 								{/* `key` is crucial here */}
