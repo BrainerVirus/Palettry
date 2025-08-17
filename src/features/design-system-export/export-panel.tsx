@@ -4,22 +4,22 @@ import Button from "@/features/shared/components/button/button"; // React Button
 import { Copy, Download } from "lucide-react"; // Ensure lucide-react is installed
 
 import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter"; // Import your ShadcnExporter
-import type { PaletteMethod } from "@/features/shared/types/global";
+import type { Palette } from "@/features/shared/types/global";
 
 export interface ExportPanelProps {
-	methods: PaletteMethod | undefined;
+	palette: Palette;
 }
 
-export default function ExportPanel({ methods }: ExportPanelProps) {
+export default function ExportPanel({ palette }: ExportPanelProps) {
 	const [cssSnippet, setCssSnippet] = useState<string>("");
 
-	// Effect to generate snippet whenever the `methods` prop changes
+	// Effect to generate snippet whenever the `palette` prop changes
 	useEffect(() => {
-		if (methods) {
-			const snippet = ShadcnExporter.generateTailwindV4CSS(methods).substring(0, 200) + "...";
+		if (palette) {
+			const snippet = ShadcnExporter.generateTailwindV4CSS(palette).substring(0, 200) + "...";
 			setCssSnippet(snippet);
 		}
-	}, [methods]);
+	}, [palette]);
 
 	const showCopyFeedback = (buttonElement: HTMLButtonElement, originalHtml: string) => {
 		buttonElement.innerHTML = `
@@ -40,12 +40,12 @@ export default function ExportPanel({ methods }: ExportPanelProps) {
 		const buttonElement = event.currentTarget;
 		let contentToCopy = "";
 		if (type === "css") {
-			if (methods) {
-				contentToCopy = ShadcnExporter.generateTailwindV4CSS(methods);
+			if (palette) {
+				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
 			}
 		} else if (type === "tailwind-config") {
-			if (methods) {
-				contentToCopy = ShadcnExporter.generateTailwindV4CSS(methods);
+			if (palette) {
+				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
 			}
 		}
 		if (contentToCopy) {
@@ -67,7 +67,7 @@ export default function ExportPanel({ methods }: ExportPanelProps) {
 				<div className="space-y-3">
 					<div className="space-y-3 rounded-lg border p-4">
 						<div className="flex items-center justify-between">
-							<h4 className="font-medium">{methods?.name}</h4>
+							<h4 className="font-medium">{palette?.name}</h4>
 							<div className="flex gap-2">
 								<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
 									<Copy className="mr-2 h-4 w-4" />
