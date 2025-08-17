@@ -40,7 +40,7 @@ export interface HueConstraint {
 	c: [number, number];
 }
 
-export interface HueConstraints {
+export interface SemanticHueConstraints {
 	success: HueConstraint;
 	warning: HueConstraint;
 	error: HueConstraint;
