@@ -11,7 +11,7 @@ import { useSignals } from "@preact/signals-react/runtime";
 export default function PaletteGeneratorApp() {
 	useSignals();
 	return (
-		<div className="grid gap-5">
+		<div className="flex flex-col gap-5">
 			<ColorInput />
 			<PaletteDisplay palette={palette.value} />
 			<ExportPanel palette={palette.value} />
