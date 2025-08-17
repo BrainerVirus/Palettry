@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Card } from "@/features/shared/components/card"; // React Card component
-import Button from "@/features/shared/components/button/button"; // React Button component
-import { Copy, Download } from "lucide-react"; // Ensure lucide-react is installed
+import { Card } from "@/features/shared/components/card";
+import Button from "@/features/shared/components/button/button";
+import { Copy, Download } from "lucide-react";
 
-import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter"; // Import your ShadcnExporter
+import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
 import type { Palette } from "@/features/shared/types/global";
 
 export interface ExportPanelProps {
