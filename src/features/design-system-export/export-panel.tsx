@@ -16,7 +16,7 @@ export default function ExportPanel({ methods }: ExportPanelProps) {
 	// Effect to generate snippet whenever the `methods` prop changes
 	useEffect(() => {
 		if (methods) {
-			const snippet = ShadcnExporter.generateCSS(methods).substring(0, 200) + "...";
+			const snippet = ShadcnExporter.generateTailwindV4CSS(methods).substring(0, 200) + "...";
 			setCssSnippet(snippet);
 		}
 	}, [methods]);
@@ -41,11 +41,11 @@ export default function ExportPanel({ methods }: ExportPanelProps) {
 		let contentToCopy = "";
 		if (type === "css") {
 			if (methods) {
-				contentToCopy = ShadcnExporter.generateCSS(methods);
+				contentToCopy = ShadcnExporter.generateTailwindV4CSS(methods);
 			}
 		} else if (type === "tailwind-config") {
 			if (methods) {
-				contentToCopy = ShadcnExporter.generateCSS(methods);
+				contentToCopy = ShadcnExporter.generateTailwindV4CSS(methods);
 			}
 		}
 		if (contentToCopy) {
