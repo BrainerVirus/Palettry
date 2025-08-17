@@ -11,19 +11,10 @@ import { useSignals } from "@preact/signals-react/runtime";
 export default function PaletteGeneratorApp() {
 	useSignals();
 	return (
-		<>
-			{/* Color Input (reads from primaryColorSignal) */}
+		<div className="grid gap-5">
 			<ColorInput />
-
-			{/* Generated Palettes (consumes methods from generatedMethodsSignal) */}
-			<div id="palette-results" className="space-y-6">
-				<PaletteDisplay palette={palette.value} />
-			</div>
-
-			{/* Export Panel (consumes methods from generatedMethodsSignal) */}
-			<div id="export-section">
-				<ExportPanel palette={palette.value} />
-			</div>
-		</>
+			<PaletteDisplay palette={palette.value} />
+			<ExportPanel palette={palette.value} />
+		</div>
 	);
 }
