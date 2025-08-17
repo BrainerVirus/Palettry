@@ -103,24 +103,73 @@ export class GenerationMethods {
 
 		return semanticColors as SemanticColors;
 	}
-
 	static generateNeutralScale(primaryColor: string): ColorShade[] {
 		const { c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
-		const neutralChroma = ColorMath.clamp(baseC * 0.1, 0.005, 0.03);
+		// Increase the lightness and reduce chroma for a whiter, softer neutral
+		const neutralChroma = ColorMath.clamp(baseC * 0.06, 0.002, 0.018);
 
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }) => {
-				const color = ColorMath.formatOklch(l, neutralChroma, baseH);
+				// For base 50, force white using oklch
+				if (Number(scale) === 50) {
+					return {
+						scale: `neutral-${scale}`,
+						color: ColorMath.formatOklch(100, 0, 0), // oklch(100% 0 0)
+						l: 100,
+						c: 0,
+						h: 0,
+					};
+				}
+				// Slightly boost lightness for extra whiteness
+				const adjustedL = Math.min(l + 4, 100);
+				const color = ColorMath.formatOklch(adjustedL, neutralChroma, baseH);
 				return {
 					scale: `neutral-${scale}`,
 					color,
-					l,
+					l: adjustedL,
 					c: neutralChroma,
 					h: baseH,
 				};
 			}
 		);
 		return neutralScale;
+	}
+
+	static generateChartScale(primaryColor: string): ColorShade[] {
+		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+
+		// Use a Tetradic color scheme for high visual distinction
+		const hueOffsets = [30, 90, 180, 270, -30];
+		const personality = { l: 72, c: 0.18 }; // A good versatile personality for charts
+
+		const chartScale: ColorShade[] = hueOffsets.map((offset, index) => {
+			const newHue = (baseH + offset + 360) % 360; // Ensure hue is always positive
+
+			// Ensure the generated color is within the sRGB gamut
+			const inGamutColor = clampChroma(
+				{
+					l: personality.l / 100,
+					c: personality.c,
+					h: newHue,
+					mode: "oklch",
+				},
+				"oklch"
+			);
+
+			const finalL = inGamutColor.l * 100;
+			const finalC = inGamutColor.c;
+			const finalH = inGamutColor.h;
+
+			return {
+				scale: `chart-${index + 1}`,
+				color: ColorMath.formatOklch(finalL, finalC, finalH),
+				l: finalL,
+				c: finalC,
+				h: finalH,
+			};
+		});
+
+		return chartScale;
 	}
 
 	static getAllMethods(primaryColor: string): PaletteMethod {
@@ -135,6 +184,7 @@ export class GenerationMethods {
 				tonalScale: this.generateTonalScale(primaryColor),
 				semanticColors: this.generateSemanticColors(primaryColor),
 				neutralScale: this.generateNeutralScale(primaryColor),
+				chartScale: this.generateChartScale(primaryColor),
 			};
 		} catch (error) {
 			console.error("Error generating palette:", error);
@@ -172,6 +222,13 @@ export class GenerationMethods {
 					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0 },
 					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0 },
 					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0 },
+				],
+				chartScale: [
+					{ scale: "chart-1", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-2", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-3", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-4", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-5", color: "", l: 0, c: 0, h: 0 },
 				],
 			};
 		}
