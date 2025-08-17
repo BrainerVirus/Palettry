@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Card from "@/features/shared/components/card/card"; // React Card component
+import { Card } from "@/features/shared/components/card"; // React Card component
 import Button from "@/features/shared/components/button/button"; // React Button component
 import { Copy, Download } from "lucide-react"; // Ensure lucide-react is installed
 
