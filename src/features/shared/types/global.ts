@@ -1,4 +1,3 @@
-// src/types/global.ts
 export interface OklchColor {
 	l: number;
 	c: number;
