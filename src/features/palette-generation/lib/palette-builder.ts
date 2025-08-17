@@ -180,7 +180,7 @@ export class PaletteBuilder {
 			}
 
 			return {
-				name: `Generated Palette for ${primaryColor}`,
+				name: `Generated Palette`,
 				description: `A complete color system derived from ${primaryColor}`,
 				tonalScale: this.buildTonalScale(primaryColor),
 				semanticColors: this.buildSemanticColors(primaryColor),
