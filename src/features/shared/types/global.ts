@@ -31,6 +31,7 @@ export interface PaletteMethod {
 	tonalScale: ColorShade[];
 	semanticColors: SemanticColors;
 	neutralScale: ColorShade[];
+	chartScale: ColorShade[];
 }
 
 export interface HueConstraint {
