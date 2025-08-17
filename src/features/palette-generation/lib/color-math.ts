@@ -1,6 +1,4 @@
-// features/palette-generation/lib/color-math.ts
 import type { OklchColor } from "@/features/shared/types/global";
-// import { WCAG_CONSTRAINTS } from "@/features/palette-generation/constants/wcag-constraints"; // No longer needed here
 
 import { converter, wcagLuminance } from "culori";
 
