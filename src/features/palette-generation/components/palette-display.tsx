@@ -22,7 +22,7 @@ export default function PaletteDisplay({ palette }: PaletteDisplayProps) {
 				{/* Tonal Scale */}
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Tonal Scale</h4>
-					<div className="grid grid-cols-11 gap-1">
+					<div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-1">
 						{palette.tonalScale.map((shade) => (
 							<div key={shade.scale} className="space-y-1">
 								{" "}
@@ -41,7 +41,7 @@ export default function PaletteDisplay({ palette }: PaletteDisplayProps) {
 				{/* Semantic Colors */}
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Semantic Colors</h4>
-					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+					<div className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3">
 						{Object.entries(palette.semanticColors).map(([name, colors]) => (
 							<div key={name} className="space-y-2">
 								{" "}
@@ -70,7 +70,7 @@ export default function PaletteDisplay({ palette }: PaletteDisplayProps) {
 				{/* Charts Colors */}
 				<div>
 					<h4 className="mb-2 text-sm font-medium">Charts Colors</h4>
-					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+					<div className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3">
 						{palette.chartScale.map((shade) => (
 							<div key={shade.scale} className="space-y-2">
 								{" "}
