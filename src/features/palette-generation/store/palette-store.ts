@@ -1,34 +1,64 @@
-import { signal } from "@preact/signals-react"; // use @preact/signals-react for React components
+import { signal, effect } from "@preact/signals-react";
 import { GenerationMethods } from "@/features/palette-generation/lib/generation-methods";
-import type { PaletteMethod } from "@/features/shared/types/global";
+import type { Palette } from "@/features/shared/types/global";
 
 // Reactive signal for the primary color input
-export const primaryColorSignal = signal<string>("oklch(49.6% 0.272 303.89)");
-
-// Reactive signal for the generated methods (computed from primaryColorSignal)
-export const generatedMethodsSignal = signal<PaletteMethod>();
-
-// Function to update methods whenever primaryColorSignal changes
-const updateGeneratedMethods = (newColor: string) => {
-	try {
-		generatedMethodsSignal.value = GenerationMethods.getAllMethods(newColor);
-	} catch (error) {
-		console.error("Error generating palettes from store:", error);
-		generatedMethodsSignal.value = undefined; // Clear on error
-	}
-};
-
-// Initialize methods when the store is loaded (for SSR hydration and initial client render)
-updateGeneratedMethods(primaryColorSignal.value);
-
-// Subscribe to changes in primaryColorSignal to re-generate methods.
-// This effect runs whenever primaryColorSignal.value changes, causing `generatedMethodsSignal` to update,
-// which in turn will trigger re-renders in any React components observing `generatedMethodsSignal`.
-primaryColorSignal.subscribe((newColor) => {
-	updateGeneratedMethods(newColor);
+export const primaryColor = signal<string>("oklch(49.6% 0.272 303.89)");
+export const palette = signal<Palette>({
+	name: "Invalid Palette",
+	description: `Failed to generate}`,
+	tonalScale: [
+		{ scale: "primary-50", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-100", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-200", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-300", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-400", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-500", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-600", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-700", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-800", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-900", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "primary-950", color: "", l: 0, c: 0, h: 0 },
+	],
+	semanticColors: {
+		success: { color: "", foreground: "" },
+		warning: { color: "", foreground: "" },
+		error: { color: "", foreground: "" },
+		info: { color: "", foreground: "" },
+	},
+	neutralScale: [
+		{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0 },
+	],
+	chartScale: [
+		{ scale: "chart-1", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "chart-2", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "chart-3", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "chart-4", color: "", l: 0, c: 0, h: 0 },
+		{ scale: "chart-5", color: "", l: 0, c: 0, h: 0 },
+	],
 });
 
-// You can optionally export a setter, but direct assignment `primaryColorSignal.value = ...` is also fine.
-export const setPrimaryColor = (newColor: string) => {
-	primaryColorSignal.value = newColor;
+export const setPrimaryColor = (value: string) => {
+	primaryColor.value = value;
 };
+
+export const setPalette = (value: Palette) => {
+	palette.value = value;
+};
+
+effect(() => {
+	console.log("Primary color changed:", primaryColor.value);
+	palette.value = GenerationMethods.generatePalette(primaryColor.value);
+
+	console.log("Generated palette:", palette.value);
+});
