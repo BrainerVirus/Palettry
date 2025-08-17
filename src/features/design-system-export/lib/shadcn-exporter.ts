@@ -1,4 +1,4 @@
-import type { PaletteMethod, ColorShade } from "@/features/shared/types/global";
+import type { Palette, ColorShade } from "@/features/shared/types/global";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { clampChroma } from "culori";
 
@@ -72,7 +72,7 @@ const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVar
 };
 
 export class ShadcnExporter {
-	private static lightVars(method: PaletteMethod): CssVars {
+	private static lightVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors } = method;
 		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
 		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
@@ -195,7 +195,7 @@ export class ShadcnExporter {
 		};
 	}
 
-	private static darkVars(method: PaletteMethod): CssVars {
+	private static darkVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors } = method;
 		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
 		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
@@ -316,7 +316,7 @@ export class ShadcnExporter {
 		return `${selector} {\n${lines}\n}`;
 	}
 
-	static generateTailwindV4CSS(method: PaletteMethod): string {
+	static generateTailwindV4CSS(method: Palette): string {
 		const themeMap = `@theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
