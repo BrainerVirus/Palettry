@@ -1,5 +1,4 @@
 import React from "react";
-// No longer need useSignal here!
 import { primaryColor } from "@/features/palette-generation/store/palette-store";
 
 const presets = [
