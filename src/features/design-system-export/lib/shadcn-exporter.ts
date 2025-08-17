@@ -1,129 +1,368 @@
 import type { PaletteMethod, ColorShade } from "@/features/shared/types/global";
+import { ColorMath } from "@/features/palette-generation/lib/color-math";
+import { clampChroma } from "culori";
 
 type CssVars = Record<string, string>;
 
-type Parsed = { lPct: number; c: number; h: number };
+// --- Helper Functions ---
 
-// Parse ok: "oklch(49.6% 0.272 303.89)" or "oklch(0.496 0.272 303.89)"
-const parseOklch = (ok: string): Parsed | null => {
-	const m = ok.match(/oklch\(\s*([0-9.]+)(%?)\s+([0-9.]+)\s+([0-9.]+)\s*\)/i);
-	if (!m) return null;
-	const l = parseFloat(m[1]);
-	const isPct = m[2] === "%";
-	return { lPct: isPct ? l : l * 100, c: parseFloat(m[3]), h: parseFloat(m[4]) };
+// Parses "oklch(L% C H)" or "oklch(L C H)" and returns a full "oklch(L C H)" string
+// with L as a 0-1 decimal, matching the shadcn/ui theme format.
+const normalizeFull = (oklchStr: string, fallback: string): string => {
+	const match = oklchStr.match(/oklch\(\s*([0-9.]+)(%?)\s+([0-9.]+)\s+([0-9.]+)\s*\)/i);
+	if (!match) return fallback;
+
+	const l = parseFloat(match[1]);
+	const isPct = match[2] === "%";
+	const lDecimal = isPct ? l / 100 : l;
+
+	return `oklch(${lDecimal.toFixed(3)} ${parseFloat(match[3]).toFixed(3)} ${parseFloat(match[4]).toFixed(3)})`;
 };
 
-// Format as full OKLCH string with lightness in 0–1 decimals like your theme
-const formatFull = (p: Parsed): string => {
-	const L = (p.lPct / 100).toFixed(3); // 49.6% -> 0.496
-	const C = p.c.toFixed(3);
-	const H = p.h.toFixed(3);
-	return `oklch(${L} ${C} ${H})`;
+// Finds a shade from a scale and returns its normalized color string.
+const findAndNormalize = (
+	scaleName: string,
+	tonalScale: ColorShade[],
+	neutralScale: ColorShade[],
+	fallback: string
+): string => {
+	const found =
+		tonalScale.find((s) => s.scale === scaleName) ||
+		neutralScale.find((s) => s.scale === scaleName);
+	return normalizeFull(found?.color ?? fallback, fallback);
 };
 
-const normalizeFull = (ok: string, fallback: string): string => {
-	const parsed = parseOklch(ok) ?? parseOklch(fallback);
-	return parsed ? formatFull(parsed) : fallback;
-};
+// Generates a set of 5 distinct and vibrant chart colors.
+const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVars } => {
+	const hues = [
+		(primaryHue + 30) % 360,
+		(primaryHue + 90) % 360,
+		(primaryHue + 180) % 360,
+		(primaryHue + 270) % 360,
+		(primaryHue - 30) % 360,
+	];
+	const lightModePersonality = { l: 70, c: 0.15 };
+	const darkModePersonality = { l: 75, c: 0.2 };
 
-const shadeFull = (scale: string, shades: ColorShade[], fallback: string): string => {
-	const found = shades.find((s) => s.scale === scale)?.color;
-	return normalizeFull(found ?? fallback, fallback);
+	const light = hues.reduce((acc, h, i) => {
+		const inGamut = clampChroma(
+			{ l: lightModePersonality.l / 100, c: lightModePersonality.c, h, mode: "oklch" },
+			"oklch"
+		);
+		acc[`--chart-${i + 1}`] = normalizeFull(
+			ColorMath.formatOklch(inGamut.l * 100, inGamut.c, inGamut.h),
+			"oklch(0.7 0.15 0)"
+		);
+		return acc;
+	}, {} as CssVars);
+
+	const dark = hues.reduce((acc, h, i) => {
+		const inGamut = clampChroma(
+			{ l: darkModePersonality.l / 100, c: darkModePersonality.c, h, mode: "oklch" },
+			"oklch"
+		);
+		acc[`--chart-${i + 1}`] = normalizeFull(
+			ColorMath.formatOklch(inGamut.l * 100, inGamut.c, inGamut.h),
+			"oklch(0.75 0.20 0)"
+		);
+		return acc;
+	}, {} as CssVars);
+
+	return { light, dark };
 };
 
 export class ShadcnExporter {
 	private static lightVars(method: PaletteMethod): CssVars {
-		const t = method.tonalScale;
+		const { tonalScale, neutralScale, semanticColors } = method;
+		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
+		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
+		const chartColors = generateChartColors(primaryColor.h);
+
+		const primaryForeground = ColorMath.getContrastingForegroundColor(primaryColor, 10);
 
 		return {
-			"--radius": "0.5rem",
+			"--radius": "0.625rem",
 
-			"--background": "oklch(1 0 0)", // white
-			"--foreground": shadeFull("950", t, "oklch(0.120 0.010 0)"),
+			// Layer 1: Page
+			"--background": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
+			"--foreground": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
 
-			"--card": "oklch(1 0 0)",
-			"--card-foreground": shadeFull("950", t, "oklch(0.120 0.010 0)"),
-
-			"--popover": "oklch(1 0 0)",
-			"--popover-foreground": shadeFull("950", t, "oklch(0.120 0.010 0)"),
-
-			"--primary": shadeFull("500", t, "oklch(0.500 0.200 300)"),
-			"--primary-foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
-
-			// neutral-ish UI tones derived from your scale
-			"--secondary": shadeFull("200", t, "oklch(0.880 0.010 300)"),
-			"--secondary-foreground": shadeFull("800", t, "oklch(0.220 0.010 300)"),
-
-			"--muted": shadeFull("200", t, "oklch(0.880 0.010 300)"),
-			"--muted-foreground": shadeFull("600", t, "oklch(0.420 0.020 300)"),
-
-			"--accent": shadeFull("200", t, "oklch(0.880 0.010 300)"),
-			"--accent-foreground": shadeFull("800", t, "oklch(0.220 0.010 300)"),
-
-			"--destructive": normalizeFull(method.semanticColors.error.color, "oklch(0.575 0.215 25)"),
-			"--destructive-foreground": normalizeFull(
-				method.semanticColors.error.foreground,
-				"oklch(0.980 0.020 25)"
+			// Layer 2: Cards & Popovers (very close to background)
+			"--card": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
+			"--card-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+			"--popover": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
+			"--popover-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
 			),
 
-			"--border": shadeFull("300", t, "oklch(0.780 0.015 300)"),
-			"--input": shadeFull("300", t, "oklch(0.780 0.015 300)"),
-			"--ring": shadeFull("500", t, "oklch(0.500 0.200 300)"),
+			// Primary
+			"--primary": normalizeFull(
+				primary500?.color || "oklch(0.496 0.272 303.89)",
+				"oklch(0.496 0.272 303.89)"
+			),
+			"--primary-foreground": normalizeFull(
+				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
+				"oklch(0.985 0 0)"
+			),
+
+			// Layer 3: Secondary/Muted/Accent (subtle fills)
+			"--secondary": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
+			"--secondary-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+			"--muted": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
+			"--muted-foreground": findAndNormalize(
+				"neutral-600",
+				tonalScale,
+				neutralScale,
+				"oklch(0.556 0 0)"
+			),
+			"--accent": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
+			"--accent-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+
+			// Destructive
+			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.577 0.245 27.325)"),
+			"--destructive-foreground": normalizeFull(
+				semanticColors.error.foreground,
+				"oklch(0.98 0.02 25)"
+			),
+
+			// Layer 4: Borders/Inputs/Ring
+			"--border": findAndNormalize("neutral-200", tonalScale, neutralScale, "oklch(0.920 0 0)"),
+			"--input": findAndNormalize("neutral-200", tonalScale, neutralScale, "oklch(0.920 0 0)"),
+			"--ring": findAndNormalize("primary-400", tonalScale, neutralScale, "oklch(0.708 0 0)"),
+
+			// Sidebar (slightly darker than page to separate)
+			"--sidebar": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
+			"--sidebar-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+			"--sidebar-border": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.922 0 0)"
+			),
+			"--sidebar-primary": findAndNormalize(
+				"primary-500",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+			"--sidebar-primary-foreground": normalizeFull(
+				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
+				"oklch(0.985 0 0)"
+			),
+			"--sidebar-accent": findAndNormalize(
+				"primary-100",
+				tonalScale,
+				neutralScale,
+				"oklch(0.970 0 0)"
+			),
+			"--sidebar-accent-foreground": findAndNormalize(
+				"primary-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.205 0 0)"
+			),
+			"--sidebar-ring": findAndNormalize(
+				"primary-400",
+				tonalScale,
+				neutralScale,
+				"oklch(0.708 0 0)"
+			),
+
+			...chartColors.light,
 		};
 	}
 
 	private static darkVars(method: PaletteMethod): CssVars {
-		const t = method.tonalScale;
+		const { tonalScale, neutralScale, semanticColors } = method;
+		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
+		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
+		const chartColors = generateChartColors(primaryColor.h);
+
+		const primaryForeground = ColorMath.getContrastingForegroundColor(primaryColor, 4.5);
 
 		return {
-			"--background": shadeFull("950", t, "oklch(0.080 0.005 300)"),
-			"--foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
+			"--background": findAndNormalize("neutral-950", tonalScale, neutralScale, "oklch(0.145 0 0)"),
+			"--foreground": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
 
-			"--card": shadeFull("900", t, "oklch(0.150 0.008 300)"),
-			"--card-foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
-
-			"--popover": shadeFull("900", t, "oklch(0.150 0.008 300)"),
-			"--popover-foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
-
-			"--primary": shadeFull("500", t, "oklch(0.500 0.200 300)"),
-			"--primary-foreground": shadeFull("900", t, "oklch(0.150 0.008 300)"),
-
-			"--secondary": shadeFull("800", t, "oklch(0.220 0.010 300)"),
-			"--secondary-foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
-
-			"--muted": shadeFull("800", t, "oklch(0.220 0.010 300)"),
-			"--muted-foreground": shadeFull("400", t, "oklch(0.650 0.020 300)"),
-
-			"--accent": shadeFull("800", t, "oklch(0.220 0.010 300)"),
-			"--accent-foreground": shadeFull("50", t, "oklch(0.980 0.000 0)"),
-
-			"--destructive": normalizeFull(method.semanticColors.error.color, "oklch(0.575 0.215 25)"),
-			"--destructive-foreground": normalizeFull(
-				method.semanticColors.error.foreground,
-				"oklch(0.980 0.020 25)"
+			"--card": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--card-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
+			),
+			"--popover": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--popover-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
 			),
 
-			"--border": shadeFull("700", t, "oklch(0.320 0.015 300)"),
-			"--input": shadeFull("700", t, "oklch(0.320 0.015 300)"),
-			"--ring": shadeFull("400", t, "oklch(0.650 0.020 300)"),
+			"--primary": normalizeFull(
+				primary500?.color || "oklch(0.496 0.272 303.89)",
+				"oklch(0.496 0.272 303.89)"
+			),
+			"--primary-foreground": normalizeFull(
+				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
+				"oklch(0.205 0 0)"
+			),
+
+			"--secondary": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
+			"--secondary-foreground": findAndNormalize(
+				"neutral-100",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
+			),
+			"--muted": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
+			"--muted-foreground": findAndNormalize(
+				"neutral-400",
+				tonalScale,
+				neutralScale,
+				"oklch(0.708 0 0)"
+			),
+			"--accent": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
+			"--accent-foreground": findAndNormalize(
+				"neutral-100",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
+			),
+
+			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.704 0.191 22.216)"),
+			"--destructive-foreground": normalizeFull(
+				semanticColors.error.foreground,
+				"oklch(0.98 0.02 25)"
+			),
+
+			"--border": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(1 0 0 / 10%)"),
+			"--input": findAndNormalize("neutral-700", tonalScale, neutralScale, "oklch(1 0 0 / 15%)"),
+			"--ring": findAndNormalize("primary-400", tonalScale, neutralScale, "oklch(0.556 0 0)"),
+
+			"--sidebar": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--sidebar-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
+			),
+			"--sidebar-border": findAndNormalize(
+				"neutral-800",
+				tonalScale,
+				neutralScale,
+				"oklch(1 0 0 / 10%)"
+			),
+			"--sidebar-primary": findAndNormalize(
+				"primary-500",
+				tonalScale,
+				neutralScale,
+				"oklch(0.488 0.243 264.376)"
+			),
+			"--sidebar-primary-foreground": normalizeFull(
+				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
+				"oklch(0.985 0 0)"
+			),
+			"--sidebar-accent": findAndNormalize(
+				"primary-800",
+				tonalScale,
+				neutralScale,
+				"oklch(0.269 0 0)"
+			),
+			"--sidebar-accent-foreground": findAndNormalize(
+				"primary-100",
+				tonalScale,
+				neutralScale,
+				"oklch(0.985 0 0)"
+			),
+			"--sidebar-ring": findAndNormalize(
+				"primary-400",
+				tonalScale,
+				neutralScale,
+				"oklch(0.556 0 0)"
+			),
+
+			...chartColors.dark,
 		};
 	}
 
-	private static format(vars: CssVars, selector: string): string {
+	private static formatVars(vars: CssVars, selector: string): string {
 		const lines = Object.entries(vars)
-			.map(([k, v]) => `    ${k}: ${v};`)
+			.map(([k, v]) => `  ${k}: ${v};`)
 			.join("\n");
-		return `  ${selector} {\n${lines}\n  }`;
+		return `${selector} {\n${lines}\n}`;
 	}
 
-	static generateCSS(method: PaletteMethod): string {
-		const light = this.format(this.lightVars(method), ":root");
-		const dark = this.format(this.darkVars(method), ".dark");
-		// IMPORTANT: use var(--token) directly, not oklch(var(--token))
-		return `@layer base {
-${light}
-
-${dark}
+	static generateTailwindV4CSS(method: PaletteMethod): string {
+		const themeMap = `@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }`;
+
+		const light = this.formatVars(this.lightVars(method), ":root");
+		const dark = this.formatVars(this.darkVars(method), ".dark");
+
+		const base = `@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+}`;
+
+		return `${themeMap}\n\n${light}\n\n${dark}\n\n${base}\n`;
 	}
 }
