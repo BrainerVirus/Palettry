@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/features/shared/components/card";
-import Button from "@/features/shared/components/button/button";
+import { Button } from "@/features/shared/components/button";
 import { Copy, Download } from "lucide-react";
 
 import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
