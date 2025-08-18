@@ -9,8 +9,8 @@
     "astro": "astro",
     "lint": "eslint . --ext .js,.ts,.astro",
     "lint:fix": "eslint . --ext .js,.ts,.astro --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write 'src/**/*.{astro,ts,js,tsx,jsx,css}'",
+    "format:check": "prettier --check 'src/**/*.{astro,ts,js,tsx,jsx,css}'",
     "prepare": "husky"
   },
   "dependencies": {
