@@ -1,8 +1,21 @@
 ---
-import Welcome from "@/features/welcome/welcome.astro";
 import MainLayout from "@/layouts/main-layout.astro";
+import PaletteGeneratorApp from "@/features/palette-generation/components/palette-generator-app"; // Your main React app component
 ---
 
-<MainLayout>
-	<Welcome />
+<MainLayout
+	title="Color Palette Creator"
+	description="Generate and export color palettes with ease."
+>
+	<div class="container mx-auto space-y-8 px-4 py-8">
+		<div class="space-y-4 text-center">
+			<h1 class="text-4xl font-bold tracking-tight">Color Palette Creator</h1>
+			<p class="text-muted-foreground mx-auto max-w-2xl text-lg">
+				Generate complete design system color palettes from a single primary color using OKLCH color
+				space and multiple generation methods.
+			</p>
+		</div>
+
+		<PaletteGeneratorApp client:load />
+	</div>
 </MainLayout>
