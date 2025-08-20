@@ -1,4 +1,5 @@
 name: GitHub CI
+
 on:
   push:
     branches:
@@ -8,30 +9,55 @@ on:
       - hotfix/*
   pull_request:
     branches:
-      - develop
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
-      - name: Lint
-        run: pnpm lint
+      - main
 
-  format:
+jobs:
+  lint-and-format:
     runs-on: ubuntu-latest
-    needs: [lint]
-    if: needs.lint.result == 'success'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - name: Install dependencies
         run: npm install -g pnpm && pnpm install
-      - name: Format
-        run: pnpm format:check
+      - name: Run Lint and Format Check
+        run: |
+          pnpm lint
+          pnpm format:check
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [lint-and-format]
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.lint-and-format.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm install -g pnpm && pnpm install
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel
+      - name: Deploy to Vercel Production
+        run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
