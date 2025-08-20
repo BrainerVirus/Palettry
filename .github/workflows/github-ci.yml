@@ -16,18 +16,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: "pnpm"
+
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: pnpm install
+
       - name: Run Lint and Format Check
         run: |
           pnpm lint
@@ -41,22 +44,24 @@ jobs:
       needs.lint-and-format.result == 'success'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: "pnpm"
+
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
-      - name: Setup pnpm global directory
-        run: pnpm setup
+        run: pnpm install
+
       - name: Install Vercel CLI
         run: pnpm add -g vercel
+
       - name: Deploy to Vercel Production
         run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
