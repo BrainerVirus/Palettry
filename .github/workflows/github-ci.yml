@@ -53,6 +53,8 @@ jobs:
             ${{ runner.os }}-node-
       - name: Install dependencies
         run: npm install -g pnpm && pnpm install
+      - name: Setup pnpm global directory
+        run: pnpm setup
       - name: Install Vercel CLI
         run: pnpm add -g vercel
       - name: Deploy to Vercel Production
