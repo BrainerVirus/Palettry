@@ -1,15 +1,16 @@
 ---
 import MainLayout from "@/layouts/main-layout.astro";
 import PaletteGeneratorApp from "@/features/palette-generation/components/palette-generator-app"; // Your main React app component
+import { Image } from "astro:assets";
+import PalettryLogo from "@/images/logos/palettry-logo.svg";
 ---
 
-<MainLayout
-	title="Color Palette Creator"
-	description="Generate and export color palettes with ease."
->
+<MainLayout title="Palettry" description="Generate and export color palettes with ease.">
 	<div class="container mx-auto space-y-8 px-4 py-8">
 		<div class="space-y-4 text-center">
-			<h1 class="text-4xl font-bold tracking-tight">Color Palette Creator</h1>
+			<h1 class="flex justify-center text-4xl font-bold tracking-tight">
+				<Image class="w-48" src={PalettryLogo} alt="Palettry Logo" />
+			</h1>
 			<p class="text-muted-foreground mx-auto max-w-2xl text-lg">
 				Generate complete design system color palettes from a single primary color using OKLCH color
 				space and multiple generation methods.
