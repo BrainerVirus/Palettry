@@ -1,6 +1,7 @@
-# Copilot Instructions for Color Palette Creator
+# Copilot Instructions for Palettry
 
 ## Project Overview
+
 - **Purpose:** Generate, preview, and export accessible color palettes for design systems using OKLCH color science.
 - **Stack:** Astro (site framework), React (UI), TypeScript (logic), Tailwind CSS (styling).
 - **Key Features:**
@@ -10,6 +11,7 @@
   - Live preview with accessibility/contrast hints
 
 ## Architecture & Structure
+
 - `src/features/` contains all major features, each in its own folder:
   - `palette-generation/`: Palette logic, UI, and state (see `lib/`, `components/`, `store/`)
   - `design-system-export/`: Export logic (e.g., `shadcn-exporter.ts`), export UI (`export-panel.tsx`)
@@ -18,6 +20,7 @@
 - Main entry: `src/pages/index.astro` loads the React app (`PaletteGeneratorApp`)
 
 ## Developer Workflows
+
 - **Install:** `pnpm install`
 - **Dev server:** `pnpm dev` (localhost:4321)
 - **Build:** `pnpm build` (output: `./dist/`)
@@ -27,6 +30,7 @@
   - Prettier config: `.prettierrc.mjs` (Astro, Tailwind plugins)
 
 ## Patterns & Conventions
+
 - **Feature-first organization:** Each feature is self-contained (UI, logic, types, state)
 - **TypeScript everywhere:** All business logic and components are typed
 - **OKLCH color space:** Palette generation and manipulation uses OKLCH for perceptual uniformity
@@ -37,16 +41,19 @@
 - **Component imports:** Use `@/` alias for `src/`
 
 ## Integration Points
+
 - **Astro + React:** Astro pages/layouts load React components for interactivity
 - **Tailwind CSS:** Used for all styling; see `astro.config.mjs` for integration
 - **shadcn/ui, DaisyUI:** Exported palettes are compatible with these libraries
 
 ## Examples
+
 - Palette generation: `src/features/palette-generation/lib/palette-builder.ts`
 - Export logic: `src/features/design-system-export/lib/shadcn-exporter.ts`
 - Main UI: `src/features/palette-generation/components/palette-generator-app.tsx`
 
 ## Additional Notes
+
 - **No test suite is present** (as of August 2025)
 - **Accessibility:** Contrast and accessibility are surfaced in the UI
 - **License:** MIT (see `LICENSE.md`)
