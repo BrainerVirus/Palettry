@@ -1,4 +1,4 @@
-# Color Palette Creator
+# Palettry
 
 Tool for designers and developers to generate, preview, and export accessible color palettes for design systems. Built with Astro, React, and TypeScript, it leverages advanced color science (OKLCH) to help you create visually consistent and accessible palettes for use in modern UI libraries like shadcn/ui and DaisyUI.
 
