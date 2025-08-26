@@ -27,6 +27,7 @@ export interface SemanticColors {
 export interface Palette {
 	name: string;
 	description: string;
+	baseScale: ColorShade[];
 	tonalScale: ColorShade[];
 	semanticColors: SemanticColors;
 	neutralScale: ColorShade[];

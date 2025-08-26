@@ -10,35 +10,33 @@ import {
 export class PaletteBuilder {
 	static buildTonalScale(primaryColor: string): ColorShade[] {
 		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
-
+		// Use imported progression constant for stops and scales
+		// PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
 		const tonalScale: ColorShade[] = PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
-			({ scale, l: lightnessOffset }) => {
-				const currentL = ColorMath.clamp(baseL + lightnessOffset, 0, 100);
-
-				let adjustedChroma: number;
-				if (currentL === 0 || baseL === 0) {
-					adjustedChroma = 0.005;
-				} else if (currentL === baseL) {
-					adjustedChroma = baseC;
-				} else {
-					adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
-				}
-
-				const inGamutChroma = clampChroma(
-					{ l: currentL / 100, c: adjustedChroma, h: baseH, mode: "oklch" },
-					"oklch"
-				).c;
-
+			({ scale, l }: { scale: string; l: number }) => {
+				const currentL = baseL + l;
+				// Chroma adjustment formula: Base_Chroma × (Current_Lightness / Base_Lightness)^0.7
+				let adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
+				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+				// For very light shades, reduce chroma further to avoid color cast
+				if (currentL >= 90) adjustedChroma = 0.05;
+				else if (currentL >= 80) adjustedChroma = 0.08;
+				else if (currentL >= 70) adjustedChroma = 0.12;
+				else if (currentL >= 60) adjustedChroma = 0.2;
+				// For very dark, reduce chroma
+				if (currentL <= 20) adjustedChroma = 0.08;
+				else if (currentL <= 28) adjustedChroma = 0.14;
+				// Clamp again
+				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
 				return {
 					scale: `primary-${scale}`,
-					color: ColorMath.formatOklch(currentL, inGamutChroma, baseH),
+					color: ColorMath.formatOklch(currentL, adjustedChroma, baseH),
 					l: currentL,
-					c: inGamutChroma,
+					c: adjustedChroma,
 					h: baseH,
 				};
 			}
 		);
-
 		return tonalScale;
 	}
 
@@ -105,36 +103,63 @@ export class PaletteBuilder {
 	}
 
 	static buildNeutralScale(primaryColor: string): ColorShade[] {
-		const { c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
-
-		const neutralChroma = ColorMath.clamp(baseC * 0.06, 0.002, 0.018);
-
+		// Use imported progression constant for stops and scales
+		// NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
+		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+		// Chroma stops as in make-colors.md
+		const CHROMA_STOPS = [
+			0.005, 0.008, 0.012, 0.018, 0.022, 0.025, 0.022, 0.018, 0.012, 0.008, 0.005,
+		];
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
-			({ scale, l }) => {
-				if (Number(scale) === 50) {
-					return {
-						scale: `neutral-${scale}`,
-						color: ColorMath.formatOklch(100, 0, 0),
-						l: 100,
-						c: 0,
-						h: 0,
-					};
-				}
-
-				const adjustedL = Math.min(l + 4, 100);
-				const color = ColorMath.formatOklch(adjustedL, neutralChroma, baseH);
-
+			({ scale, l }: { scale: string; l: number }, i: number) => {
+				const c = CHROMA_STOPS[i];
 				return {
 					scale: `neutral-${scale}`,
-					color,
-					l: adjustedL,
-					c: neutralChroma,
+					color: ColorMath.formatOklch(l, c, baseH),
+					l,
+					c,
 					h: baseH,
 				};
 			}
 		);
-
 		return neutralScale;
+	}
+
+	/**
+	 * Build base scale for backgrounds (main bg for light/dark mode)
+	 * See: make-colors.md and make-colors-5.md step 7
+	 */
+	static buildBaseScale(): ColorShade[] {
+		return [
+			{
+				scale: "base-100",
+				color: "oklch(100% 0 360)",
+				l: 100,
+				c: 0,
+				h: 360,
+			},
+			{
+				scale: "base-95",
+				color: "oklch(0.996 0.000 360.000)",
+				l: 98,
+				c: 0.005,
+				h: 303.89,
+			},
+			{
+				scale: "base-10",
+				color: "oklch(15% 0.008 303.89)",
+				l: 15,
+				c: 0.008,
+				h: 303.89,
+			},
+			{
+				scale: "base-0",
+				color: "oklch(0% 0 360)",
+				l: 0,
+				c: 0,
+				h: 360,
+			},
+		];
 	}
 
 	static buildChartScale(primaryColor: string): ColorShade[] {
@@ -182,6 +207,7 @@ export class PaletteBuilder {
 			return {
 				name: `Generated Palette`,
 				description: `A complete color system derived from ${primaryColor}`,
+				baseScale: this.buildBaseScale(),
 				tonalScale: this.buildTonalScale(primaryColor),
 				semanticColors: this.buildSemanticColors(primaryColor),
 				neutralScale: this.buildNeutralScale(primaryColor),
@@ -192,6 +218,12 @@ export class PaletteBuilder {
 			return {
 				name: "Invalid Palette",
 				description: `Failed to generate: ${(error as Error).message}`,
+				baseScale: [
+					{ scale: "base-100", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "base-95", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "base-10", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "base-0", color: "", l: 0, c: 0, h: 0 },
+				],
 				tonalScale: [
 					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0 },
 					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0 },
