@@ -1,3 +1,8 @@
+// --- Base Palette Builder ---
+import { PaletteBuilder } from "@/features/palette-generation/lib/palette-builder";
+
+// Helper to get base palette (main backgrounds)
+const getBasePalette = (): ColorShade[] => PaletteBuilder.buildBaseScale();
 import type { Palette, ColorShade } from "@/features/shared/types/global";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { clampChroma } from "culori";
@@ -74,34 +79,30 @@ const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVar
 export class ShadcnExporter {
 	private static lightVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors } = method;
+		const baseScale = getBasePalette();
 		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
 		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
 		const chartColors = generateChartColors(primaryColor.h);
-
 		const primaryForeground = ColorMath.getContrastingForegroundColor(primaryColor, 10);
+
+		// Helper to get a base color by scale
+		const getBase = (scale: string, fallback: string) => {
+			const found = baseScale.find((s) => s.scale === scale);
+			return normalizeFull(found?.color ?? fallback, fallback);
+		};
 
 		return {
 			"--radius": "0.625rem",
 
 			// Layer 1: Page
-			"--background": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
-			"--foreground": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--background": getBase("base-100", "oklch(1 0 360)"),
+			"--foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
 
 			// Layer 2: Cards & Popovers (very close to background)
-			"--card": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
-			"--card-foreground": findAndNormalize(
-				"neutral-900",
-				tonalScale,
-				neutralScale,
-				"oklch(0.205 0 0)"
-			),
-			"--popover": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
-			"--popover-foreground": findAndNormalize(
-				"neutral-900",
-				tonalScale,
-				neutralScale,
-				"oklch(0.205 0 0)"
-			),
+			"--card": getBase("base-95", "oklch(0.98 0.005 303.89)"),
+			"--card-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
+			"--popover": getBase("base-95", "oklch(0.98 0.005 303.89)"),
+			"--popover-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
 
 			// Primary
 			"--primary": normalizeFull(
@@ -110,17 +111,12 @@ export class ShadcnExporter {
 			),
 			"--primary-foreground": normalizeFull(
 				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				"oklch(0.985 0 0)"
+				getBase("base-100", "oklch(1 0 360)")
 			),
 
 			// Layer 3: Secondary/Muted/Accent (subtle fills)
 			"--secondary": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--secondary-foreground": findAndNormalize(
-				"neutral-900",
-				tonalScale,
-				neutralScale,
-				"oklch(0.205 0 0)"
-			),
+			"--secondary-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
 			"--muted": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
 			"--muted-foreground": findAndNormalize(
 				"neutral-600",
@@ -129,18 +125,13 @@ export class ShadcnExporter {
 				"oklch(0.556 0 0)"
 			),
 			"--accent": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--accent-foreground": findAndNormalize(
-				"neutral-900",
-				tonalScale,
-				neutralScale,
-				"oklch(0.205 0 0)"
-			),
+			"--accent-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
 
 			// Destructive
 			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.577 0.245 27.325)"),
 			"--destructive-foreground": normalizeFull(
 				semanticColors.error.foreground,
-				"oklch(0.98 0.02 25)"
+				getBase("base-100", "oklch(1 0 360)")
 			),
 
 			// Layer 4: Borders/Inputs/Ring
@@ -149,13 +140,8 @@ export class ShadcnExporter {
 			"--ring": findAndNormalize("primary-400", tonalScale, neutralScale, "oklch(0.708 0 0)"),
 
 			// Sidebar (slightly darker than page to separate)
-			"--sidebar": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--sidebar-foreground": findAndNormalize(
-				"neutral-900",
-				tonalScale,
-				neutralScale,
-				"oklch(0.205 0 0)"
-			),
+			"--sidebar": getBase("base-95", "oklch(0.98 0.005 303.89)"),
+			"--sidebar-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
 			"--sidebar-border": findAndNormalize(
 				"neutral-200",
 				tonalScale,
@@ -166,23 +152,23 @@ export class ShadcnExporter {
 				"primary-500",
 				tonalScale,
 				neutralScale,
-				"oklch(0.205 0 0)"
+				getBase("base-10", "oklch(0.15 0.008 303.89)")
 			),
 			"--sidebar-primary-foreground": normalizeFull(
 				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				"oklch(0.985 0 0)"
+				getBase("base-100", "oklch(1 0 360)")
 			),
 			"--sidebar-accent": findAndNormalize(
 				"primary-100",
 				tonalScale,
 				neutralScale,
-				"oklch(0.970 0 0)"
+				getBase("base-95", "oklch(0.98 0.005 303.89)")
 			),
 			"--sidebar-accent-foreground": findAndNormalize(
 				"primary-900",
 				tonalScale,
 				neutralScale,
-				"oklch(0.205 0 0)"
+				getBase("base-100", "oklch(1 0 360)")
 			),
 			"--sidebar-ring": findAndNormalize(
 				"primary-400",
