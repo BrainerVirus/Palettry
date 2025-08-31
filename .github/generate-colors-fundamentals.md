@@ -212,6 +212,133 @@ Neutral scales provide essential UI infrastructure while maintaining subtle bran
 
 ---
 
+## STEP 3.5: Define Base Colors
+
+### What
+
+Establish the fundamental background colors for your design system - the main canvas colors that set the foundation for light and dark modes.
+
+### How
+
+1. Choose pure or near-pure white for light mode base
+2. Choose pure or near-pure black for dark mode base
+3. Create intermediate base shades for layered surfaces
+4. Ensure sufficient contrast with text colors
+
+### Why
+
+Base colors are the foundation of your visual hierarchy. They establish the "home base" that all other colors are built upon and ensure readability across different contexts.
+
+### Step 3.5A: Light Mode Base Colors
+
+**Primary Base (Background):** Pure white or slightly off-white
+**Secondary Base (Surface):** Very light neutral for cards, modals, etc.
+**Tertiary Base (Elevated):** Slightly darker for layered elements
+
+```css
+/* Light mode base colors */
+--base-100: oklch(100% 0 360); /* Pure white - main background */
+--base-95: oklch(98% 0.005 303.89); /* Very light neutral - cards, popovers */
+--base-90: oklch(96% 0.008 303.89); /* Light neutral - elevated surfaces */
+--base-85: oklch(94% 0.01 303.89); /* Medium-light - tooltips, dropdowns */
+```
+
+**Rationale:**
+
+- **Pure White (100% L):** Maximum brightness, ensures content stands out
+- **Subtle Chroma:** Uses your primary hue for brand cohesion
+- **Progressive Scale:** Each level provides clear visual hierarchy
+
+### Step 3.5B: Dark Mode Base Colors
+
+**Primary Base (Background):** Pure black or slightly off-black
+**Secondary Base (Surface):** Very dark neutral for cards, modals
+**Tertiary Base (Elevated):** Slightly lighter for layered elements
+
+```css
+/* Dark mode base colors */
+--base-0: oklch(0% 0 360); /* Pure black - main background */
+--base-5: oklch(2% 0.005 303.89); /* Very dark neutral - cards, popovers */
+--base-10: oklch(4% 0.008 303.89); /* Dark neutral - elevated surfaces */
+--base-15: oklch(6% 0.01 303.89); /* Medium-dark - tooltips, dropdowns */
+```
+
+**Rationale:**
+
+- **Pure Black (0% L):** Maximum darkness, ensures content visibility
+- **Consistent Chroma:** Matches light mode approach
+- **Accessibility:** Provides sufficient contrast for text (typically 4.5:1 minimum)
+
+### Step 3.5C: Base Color Selection Guidelines
+
+**Light Mode Base Selection:**
+
+```javascript
+// For light mode, choose based on brand personality
+const lightModeBaseOptions = {
+  pure: { lightness: 100, chroma: 0, hue: 360 }, // Pure white
+  warm: { lightness: 99, chroma: 0.002, hue: 45 }, // Warm white
+  cool: { lightness: 99, chroma: 0.002, hue: 240 }, // Cool white
+  branded: { lightness: 98, chroma: 0.005, hue: primaryHue }, // Subtle brand tint
+};
+```
+
+**Dark Mode Base Selection:**
+
+```javascript
+// For dark mode, choose based on content and accessibility
+const darkModeBaseOptions = {
+  pure: { lightness: 0, chroma: 0, hue: 360 }, // Pure black
+  elevated: { lightness: 3, chroma: 0.003, hue: primaryHue }, // Slightly elevated
+  neutral: { lightness: 5, chroma: 0.005, hue: 240 }, // Neutral dark
+  warm: { lightness: 4, chroma: 0.004, hue: 25 }, // Warm dark
+};
+```
+
+### Step 3.5D: Contrast Validation
+
+**Text on Base Colors:**
+
+```css
+/* Light mode text colors */
+--base-100-content: oklch(15% 0.008 303.89); /* Dark text on white */
+--base-95-content: oklch(18% 0.01 303.89); /* Dark text on light surface */
+
+/* Dark mode text colors */
+--base-0-content: oklch(92% 0.004 303.89); /* Light text on black */
+--base-5-content: oklch(88% 0.006 303.89); /* Light text on dark surface */
+```
+
+**Contrast Requirements:**
+
+- **Normal Text:** ≥ 4.5:1 (WCAG AA)
+- **Large Text:** ≥ 3:1 (WCAG AA)
+- **Interactive Elements:** ≥ 3:1
+
+### Step 3.5E: Integration with Neutral Scale
+
+**Relationship to Neutrals:**
+
+```css
+/* Base colors complement neutral scale */
+--neutral-50: oklch(98% 0.005 303.89); /* Similar to --base-95 */
+--neutral-950: oklch(8% 0.005 303.89); /* Similar to --base-5 */
+
+/* Use cases */
+--base-100:
+  Main application background --neutral-50: Card backgrounds,
+  subtle fills --neutral-950: Dark mode main background --base-5: Dark mode card backgrounds;
+```
+
+### Considerations
+
+- **Brand Consistency:** Use primary hue for subtle brand association
+- **Accessibility First:** Ensure all text combinations meet contrast requirements
+- **Progressive Hierarchy:** Each base level should provide clear visual separation
+- **Cross-Mode Consistency:** Light and dark bases should feel like complementary pairs
+
+---
+
 ## STEP 4: Generate Semantic Colors
 
 ### What
@@ -228,7 +355,7 @@ Create success, warning, error, and info colors using color theory relationships
 
 Semantic colors need to convey meaning while feeling cohesive with your brand. Direct hue rotation fails because each hue has different optimal ranges and perceptual properties.
 
-### Step 4A: Choose Hue Families
+### Step 5A: Choose Hue Families
 
 **Color Theory Relationships:**
 
@@ -237,7 +364,7 @@ Semantic colors need to convey meaning while feeling cohesive with your brand. D
 - **Error:** Red family (~25°)
 - **Info:** Blue family (~240°)
 
-### Step 4B: Apply Hue Constraints
+### Step 5B: Apply Hue Constraints
 
 **Why:** Each hue has different perceptual characteristics and optimal ranges.
 
@@ -250,7 +377,7 @@ const hueOptimalRanges = {
 };
 ```
 
-### Step 4C: Match Target Personality
+### Step 5C: Match Target Personality
 
 **Target Metrics:** Match your primary's weight (~13.71) and energy (~0.271)
 
@@ -283,7 +410,7 @@ function matchPersonality(hue, constraints, targetWeight) {
 }
 ```
 
-### Step 4D: Results and Foreground Colors
+### Step 5D: Results and Foreground Colors
 
 ```css
 /* Personality-matched semantic colors */
