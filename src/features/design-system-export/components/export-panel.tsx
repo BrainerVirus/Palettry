@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card } from "@/features/shared/components/card";
 import { Button } from "@/features/shared/components/button";
 import { Copy } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/features/shared/components/tabs";
 
 import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
 import { DaisyUIExporter } from "@/features/design-system-export/lib/daisyui-exporter";
@@ -80,42 +81,33 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 						Export your generated palettes to different design systems
 					</p>
 				</div>
-				<div className="flex gap-2">
-					<Button
-						size="sm"
-						variant={selectedExporter === "shadcn" ? "default" : "outline"}
-						onClick={() => setSelectedExporter("shadcn")}
-					>
-						shadcn/ui
-					</Button>
-					<Button
-						size="sm"
-						variant={selectedExporter === "daisyui" ? "default" : "outline"}
-						onClick={() => setSelectedExporter("daisyui")}
-					>
-						DaisyUI
-					</Button>
-					<Button
-						size="sm"
-						variant={selectedExporter === "tailwindv4" ? "default" : "outline"}
-						onClick={() => setSelectedExporter("tailwindv4")}
-					>
-						Tailwind v4
-					</Button>
-				</div>
-				<div className="space-y-3">
-					<div className="space-y-3 rounded-lg border p-4">
-						<div className="flex gap-2">
-							<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
-								<Copy className="mr-2 h-4 w-4" />
-								Copy CSS
-							</Button>
+				<Tabs
+					value={selectedExporter}
+					onValueChange={(v) => {
+						if (v === "shadcn" || v === "daisyui" || v === "tailwindv4") {
+							setSelectedExporter(v);
+						}
+					}}
+				>
+					<TabsList>
+						<TabsTrigger value="shadcn">shadcn/ui</TabsTrigger>
+						<TabsTrigger value="daisyui">DaisyUI</TabsTrigger>
+						<TabsTrigger value="tailwindv4">Tailwind v4</TabsTrigger>
+					</TabsList>
+					<TabsContent value={selectedExporter} className="mt-2">
+						<div className="space-y-3 rounded-lg border p-4">
+							<div className="flex gap-2">
+								<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
+									<Copy className="mr-2 h-4 w-4" />
+									Copy CSS
+								</Button>
+							</div>
+							<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
+								<pre>{cssSnippet}</pre>
+							</div>
 						</div>
-						<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
-							<pre>{cssSnippet}</pre>
-						</div>
-					</div>
-				</div>
+					</TabsContent>
+				</Tabs>
 			</div>
 		</Card>
 	);
