@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/features/shared/components/card";
 import { Button } from "@/features/shared/components/button";
-import { Copy, Download } from "lucide-react";
+import { Copy } from "lucide-react";
 
 import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
+import { DaisyUIExporter } from "@/features/design-system-export/lib/daisyui-exporter";
+import { TailwindV4Exporter } from "@/features/design-system-export/lib/tailwind-v4-exporter";
 import type { Palette } from "@/features/shared/types/global";
 
 export interface ExportPanelProps {
@@ -12,14 +14,24 @@ export interface ExportPanelProps {
 
 export default function ExportPanel({ palette }: ExportPanelProps) {
 	const [cssSnippet, setCssSnippet] = useState<string>("");
+	const [selectedExporter, setSelectedExporter] = useState<"shadcn" | "daisyui" | "tailwindv4">(
+		"shadcn"
+	);
 
 	// Effect to generate snippet whenever the `palette` prop changes
 	useEffect(() => {
 		if (palette) {
-			const snippet = ShadcnExporter.generateTailwindV4CSS(palette).substring(0, 200) + "...";
-			setCssSnippet(snippet);
+			let snippet = "";
+			if (selectedExporter === "shadcn") {
+				snippet = ShadcnExporter.generateTailwindV4CSS(palette);
+			} else if (selectedExporter === "daisyui") {
+				snippet = DaisyUIExporter.generateDaisyUIThemes(palette);
+			} else if (selectedExporter === "tailwindv4") {
+				snippet = TailwindV4Exporter.generateTailwindV4CSS(palette);
+			}
+			setCssSnippet(snippet.substring(0, 200) + "...");
 		}
-	}, [palette]);
+	}, [palette, selectedExporter]);
 
 	const showCopyFeedback = (buttonElement: HTMLButtonElement, originalHtml: string) => {
 		buttonElement.innerHTML = `
@@ -39,13 +51,17 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 	) => {
 		const buttonElement = event.currentTarget;
 		let contentToCopy = "";
-		if (type === "css") {
+		if (selectedExporter === "shadcn") {
 			if (palette) {
 				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
 			}
-		} else if (type === "tailwind-config") {
+		} else if (selectedExporter === "daisyui") {
 			if (palette) {
-				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
+				contentToCopy = DaisyUIExporter.generateDaisyUIThemes(palette);
+			}
+		} else if (selectedExporter === "tailwindv4") {
+			if (palette) {
+				contentToCopy = TailwindV4Exporter.generateTailwindV4CSS(palette);
 			}
 		}
 		if (contentToCopy) {
@@ -59,10 +75,33 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 		<Card>
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-lg font-semibold">Export to shadcn/ui</h3>
+					<h3 className="text-lg font-semibold">Export Design System</h3>
 					<p className="text-muted-foreground text-sm">
-						Export your generated palettes as shadcn/ui CSS variables
+						Export your generated palettes to different design systems
 					</p>
+				</div>
+				<div className="flex gap-2">
+					<Button
+						size="sm"
+						variant={selectedExporter === "shadcn" ? "default" : "outline"}
+						onClick={() => setSelectedExporter("shadcn")}
+					>
+						shadcn/ui
+					</Button>
+					<Button
+						size="sm"
+						variant={selectedExporter === "daisyui" ? "default" : "outline"}
+						onClick={() => setSelectedExporter("daisyui")}
+					>
+						DaisyUI
+					</Button>
+					<Button
+						size="sm"
+						variant={selectedExporter === "tailwindv4" ? "default" : "outline"}
+						onClick={() => setSelectedExporter("tailwindv4")}
+					>
+						Tailwind v4
+					</Button>
 				</div>
 				<div className="space-y-3">
 					<div className="space-y-3 rounded-lg border p-4">
@@ -70,10 +109,6 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 							<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
 								<Copy className="mr-2 h-4 w-4" />
 								Copy CSS
-							</Button>
-							<Button size="sm" variant="outline" onClick={(e) => handleCopy("tailwind-config", e)}>
-								<Download className="mr-2 h-4 w-4" />
-								Tailwind Config
 							</Button>
 						</div>
 						<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
