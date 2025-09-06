@@ -1,297 +1,323 @@
 // --- Base Palette Builder ---
-import { PaletteBuilder } from "@/features/palette-generation/lib/palette-builder";
-
-// Helper to get base palette (main backgrounds)
-const getBasePalette = (): ColorShade[] => PaletteBuilder.buildBaseScale();
-import type { Palette, ColorShade } from "@/features/shared/types/global";
+import type { Palette } from "@/features/shared/types/global";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
-import { clampChroma } from "culori";
+import { normalizeFull, findAndNormalize } from "./palette-utils";
 
 type CssVars = Record<string, string>;
 
-// --- Helper Functions ---
-
-// Parses "oklch(L% C H)" or "oklch(L C H)" and returns a full "oklch(L C H)" string
-// with L as a 0-1 decimal, matching the shadcn/ui theme format.
-const normalizeFull = (oklchStr: string, fallback: string): string => {
-	const match = oklchStr.match(/oklch\(\s*([0-9.]+)(%?)\s+([0-9.]+)\s+([0-9.]+)\s*\)/i);
-	if (!match) return fallback;
-
-	const l = parseFloat(match[1]);
-	const isPct = match[2] === "%";
-	const lDecimal = isPct ? l / 100 : l;
-
-	return `oklch(${lDecimal.toFixed(3)} ${parseFloat(match[3]).toFixed(3)} ${parseFloat(match[4]).toFixed(3)})`;
-};
-
-// Finds a shade from a scale and returns its normalized color string.
-const findAndNormalize = (
-	scaleName: string,
-	tonalScale: ColorShade[],
-	neutralScale: ColorShade[],
-	fallback: string
-): string => {
-	const found =
-		tonalScale.find((s) => s.scale === scaleName) ||
-		neutralScale.find((s) => s.scale === scaleName);
-	return normalizeFull(found?.color ?? fallback, fallback);
-};
-
-// Generates a set of 5 distinct and vibrant chart colors.
-const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVars } => {
-	const hues = [
-		(primaryHue + 30) % 360,
-		(primaryHue + 90) % 360,
-		(primaryHue + 180) % 360,
-		(primaryHue + 270) % 360,
-		(primaryHue - 30) % 360,
-	];
-	const lightModePersonality = { l: 70, c: 0.15 };
-	const darkModePersonality = { l: 75, c: 0.2 };
-
-	const light = hues.reduce((acc, h, i) => {
-		const inGamut = clampChroma(
-			{ l: lightModePersonality.l / 100, c: lightModePersonality.c, h, mode: "oklch" },
-			"oklch"
-		);
-		acc[`--chart-${i + 1}`] = normalizeFull(
-			ColorMath.formatOklch(inGamut.l * 100, inGamut.c, inGamut.h),
-			"oklch(0.7 0.15 0)"
-		);
-		return acc;
-	}, {} as CssVars);
-
-	const dark = hues.reduce((acc, h, i) => {
-		const inGamut = clampChroma(
-			{ l: darkModePersonality.l / 100, c: darkModePersonality.c, h, mode: "oklch" },
-			"oklch"
-		);
-		acc[`--chart-${i + 1}`] = normalizeFull(
-			ColorMath.formatOklch(inGamut.l * 100, inGamut.c, inGamut.h),
-			"oklch(0.75 0.20 0)"
-		);
-		return acc;
-	}, {} as CssVars);
-
-	return { light, dark };
-};
-
 export class ShadcnExporter {
-	private static lightVars(method: Palette): CssVars {
-		const { tonalScale, neutralScale, semanticColors } = method;
-		const baseScale = getBasePalette();
-		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
-		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
-		const chartColors = generateChartColors(primaryColor.h);
-		const primaryForeground = ColorMath.getContrastingForegroundColor(primaryColor, 10);
+	private static generateChartColors(primaryColor: string): CssVars {
+		const { l, c, h } = ColorMath.parseOklch(primaryColor);
 
-		// Helper to get a base color by scale
-		const getBase = (scale: string, fallback: string) => {
-			const found = baseScale.find((s) => s.scale === scale);
-			return normalizeFull(found?.color ?? fallback, fallback);
-		};
+		// Generate chart colors as variations of the primary color
+		const variations = [
+			{ l: l, c: c, h: h }, // chart-1: base primary
+			{ l: l - 0.08, c: c + 0.03, h: h - 0.09 }, // chart-2: slightly darker, more chroma
+			{ l: l - 0.13, c: c + 0.03, h: h - 0.09 }, // chart-3: darker
+			{ l: l - 0.19, c: c - 0.02, h: h + 0.1 }, // chart-4: much darker, less chroma
+			{ l: l - 0.23, c: c - 0.06, h: h + 1.59 }, // chart-5: darkest, least chroma
+		];
 
-		return {
-			"--radius": "0.625rem",
+		const chartVars: CssVars = {};
+		variations.forEach((variation, index) => {
+			chartVars[`--chart-${index + 1}`] = normalizeFull(
+				ColorMath.formatOklch(variation.l, variation.c, variation.h),
+				`oklch(${variation.l} ${variation.c} ${variation.h})`
+			);
+		});
 
-			// Layer 1: Page
-			"--background": getBase("base-100", "oklch(1 0 360)"),
-			"--foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-
-			// Layer 2: Cards & Popovers (very close to background)
-			"--card": getBase("base-95", "oklch(0.98 0.005 303.89)"),
-			"--card-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-			"--popover": getBase("base-95", "oklch(0.98 0.005 303.89)"),
-			"--popover-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-
-			// Primary
-			"--primary": normalizeFull(
-				primary500?.color || "oklch(0.496 0.272 303.89)",
-				"oklch(0.496 0.272 303.89)"
-			),
-			"--primary-foreground": normalizeFull(
-				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				getBase("base-100", "oklch(1 0 360)")
-			),
-
-			// Layer 3: Secondary/Muted/Accent (subtle fills)
-			"--secondary": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--secondary-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-			"--muted": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--muted-foreground": findAndNormalize(
-				"neutral-600",
-				tonalScale,
-				neutralScale,
-				"oklch(0.556 0 0)"
-			),
-			"--accent": findAndNormalize("neutral-100", tonalScale, neutralScale, "oklch(0.970 0 0)"),
-			"--accent-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-
-			// Destructive
-			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.577 0.245 27.325)"),
-			"--destructive-foreground": normalizeFull(
-				semanticColors.error.foreground,
-				getBase("base-100", "oklch(1 0 360)")
-			),
-
-			// Layer 4: Borders/Inputs/Ring
-			"--border": findAndNormalize("neutral-200", tonalScale, neutralScale, "oklch(0.920 0 0)"),
-			"--input": findAndNormalize("neutral-200", tonalScale, neutralScale, "oklch(0.920 0 0)"),
-			"--ring": findAndNormalize("primary-400", tonalScale, neutralScale, "oklch(0.708 0 0)"),
-
-			// Sidebar (slightly darker than page to separate)
-			"--sidebar": getBase("base-95", "oklch(0.98 0.005 303.89)"),
-			"--sidebar-foreground": getBase("base-10", "oklch(0.15 0.008 303.89)"),
-			"--sidebar-border": findAndNormalize(
-				"neutral-200",
-				tonalScale,
-				neutralScale,
-				"oklch(0.922 0 0)"
-			),
-			"--sidebar-primary": findAndNormalize(
-				"primary-500",
-				tonalScale,
-				neutralScale,
-				getBase("base-10", "oklch(0.15 0.008 303.89)")
-			),
-			"--sidebar-primary-foreground": normalizeFull(
-				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				getBase("base-100", "oklch(1 0 360)")
-			),
-			"--sidebar-accent": findAndNormalize(
-				"primary-100",
-				tonalScale,
-				neutralScale,
-				getBase("base-95", "oklch(0.98 0.005 303.89)")
-			),
-			"--sidebar-accent-foreground": findAndNormalize(
-				"primary-900",
-				tonalScale,
-				neutralScale,
-				getBase("base-100", "oklch(1 0 360)")
-			),
-			"--sidebar-ring": findAndNormalize(
-				"primary-400",
-				tonalScale,
-				neutralScale,
-				"oklch(0.708 0 0)"
-			),
-
-			...chartColors.light,
-		};
+		return chartVars;
 	}
 
-	private static darkVars(method: Palette): CssVars {
-		const { tonalScale, neutralScale, semanticColors } = method;
+	private static lightVars(method: Palette): CssVars {
+		const { tonalScale, neutralScale, baseScale, semanticColors } = method;
 		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
-		const primaryColor = ColorMath.parseOklch(primary500?.color || "oklch(50% 0 0)");
-		const chartColors = generateChartColors(primaryColor.h);
-
-		const primaryForeground = ColorMath.getContrastingForegroundColor(primaryColor, 4.5);
+		const primaryColor = primary500?.color || "oklch(0.59 0.20 277.06)";
+		const _chartColors = this.generateChartColors(primaryColor);
 
 		return {
-			"--background": findAndNormalize("neutral-950", tonalScale, neutralScale, "oklch(0.145 0 0)"),
-			"--foreground": findAndNormalize("neutral-50", tonalScale, neutralScale, "oklch(0.985 0 0)"),
-
-			"--card": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--background": findAndNormalize("base-50", tonalScale, baseScale, "oklch(1 0 0)"),
+			"--foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.28 0.04 260.33)"
+			),
+			"--card": findAndNormalize("base-50", tonalScale, baseScale, "oklch(0.99 0 0)"),
 			"--card-foreground": findAndNormalize(
-				"neutral-50",
+				"neutral-900",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(0.28 0.04 260.33)"
 			),
-			"--popover": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			"--popover": findAndNormalize("base-50", tonalScale, baseScale, "oklch(0.99 0 0)"),
 			"--popover-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.28 0.04 260.33)"
+			),
+			"--primary": normalizeFull(primaryColor, "oklch(0.59 0.20 277.06)"),
+			"--primary-foreground": findAndNormalize(
 				"neutral-50",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(1.00 0 0)"
 			),
-
-			"--primary": normalizeFull(
-				primary500?.color || "oklch(0.496 0.272 303.89)",
-				"oklch(0.496 0.272 303.89)"
-			),
-			"--primary-foreground": normalizeFull(
-				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				"oklch(0.205 0 0)"
-			),
-
-			"--secondary": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
-			"--secondary-foreground": findAndNormalize(
+			"--secondary": findAndNormalize(
 				"neutral-100",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(0.93 0.01 261.82)"
 			),
-			"--muted": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
+			"--secondary-foreground": findAndNormalize(
+				"neutral-600",
+				tonalScale,
+				neutralScale,
+				"oklch(0.37 0.03 259.73)"
+			),
+			"--muted": findAndNormalize("base-300", tonalScale, baseScale, "oklch(0.97 0 0)"),
 			"--muted-foreground": findAndNormalize(
 				"neutral-400",
 				tonalScale,
 				neutralScale,
-				"oklch(0.708 0 0)"
+				"oklch(0.55 0.02 264.41)"
 			),
-			"--accent": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(0.269 0 0)"),
-			"--accent-foreground": findAndNormalize(
+			"--accent": findAndNormalize(
 				"neutral-100",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(0.93 0.03 273.66)"
 			),
-
-			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.704 0.191 22.216)"),
-			"--destructive-foreground": normalizeFull(
-				semanticColors.error.foreground,
-				"oklch(0.98 0.02 25)"
+			"--accent-foreground": findAndNormalize(
+				"neutral-600",
+				tonalScale,
+				neutralScale,
+				"oklch(0.37 0.03 259.73)"
 			),
+			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.64 0.21 25.39)"),
+			"--border": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.87 0.01 261.81)"
+			),
+			"--input": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.87 0.01 261.81)"
+			),
+			"--ring": normalizeFull(primaryColor, "oklch(0.59 0.20 277.06)"),
+			"--sidebar": findAndNormalize("base-300", tonalScale, baseScale, "oklch(0.97 0 0)"),
+			"--sidebar-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.28 0.04 260.33)"
+			),
+			"--sidebar-primary": normalizeFull(primaryColor, "oklch(0.59 0.20 277.06)"),
+			"--sidebar-primary-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(1.00 0 0)"
+			),
+			"--sidebar-accent": findAndNormalize(
+				"neutral-100",
+				tonalScale,
+				neutralScale,
+				"oklch(0.93 0.03 273.66)"
+			),
+			"--sidebar-accent-foreground": findAndNormalize(
+				"neutral-600",
+				tonalScale,
+				neutralScale,
+				"oklch(0.37 0.03 259.73)"
+			),
+			"--sidebar-border": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.87 0.01 261.81)"
+			),
+			"--sidebar-ring": normalizeFull(primaryColor, "oklch(0.59 0.20 277.06)"),
 
-			"--border": findAndNormalize("neutral-800", tonalScale, neutralScale, "oklch(1 0 0 / 10%)"),
-			"--input": findAndNormalize("neutral-700", tonalScale, neutralScale, "oklch(1 0 0 / 15%)"),
-			"--ring": findAndNormalize("primary-400", tonalScale, neutralScale, "oklch(0.556 0 0)"),
+			// Fonts
+			"--font-sans": "Inter, sans-serif",
+			"--font-serif": "Merriweather, serif",
+			"--font-mono": "JetBrains Mono, monospace",
 
-			"--sidebar": findAndNormalize("neutral-900", tonalScale, neutralScale, "oklch(0.205 0 0)"),
+			// Radius
+			"--radius": "0.5rem",
+
+			// Shadows
+			"--shadow-2xs": "0px 4px 8px -1px oklch(0.00 0 0 / 0.05)",
+			"--shadow-xs": "0px 4px 8px -1px oklch(0.00 0 0 / 0.05)",
+			"--shadow-sm":
+				"0px 4px 8px -1px oklch(0.00 0 0 / 0.10), 0px 1px 2px -2px oklch(0.00 0 0 / 0.10)",
+			"--shadow":
+				"0px 4px 8px -1px oklch(0.00 0 0 / 0.10), 0px 1px 2px -2px oklch(0.00 0 0 / 0.10)",
+			"--shadow-md":
+				"0px 4px 8px -1px oklch(0.00 0 0 / 0.10), 0px 2px 4px -2px oklch(0.00 0 0 / 0.10)",
+			"--shadow-lg":
+				"0px 4px 8px -1px oklch(0.00 0 0 / 0.10), 0px 4px 6px -2px oklch(0.00 0 0 / 0.10)",
+			"--shadow-xl":
+				"0px 4px 8px -1px oklch(0.00 0 0 / 0.10), 0px 8px 10px -2px oklch(0.00 0 0 / 0.10)",
+			"--shadow-2xl": "0px 4px 8px -1px oklch(0.00 0 0 / 0.25)",
+
+			..._chartColors,
+		};
+	}
+
+	private static darkVars(method: Palette): CssVars {
+		const { tonalScale, neutralScale, baseScale, semanticColors } = method;
+		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
+		const primaryColor = primary500?.color || "oklch(0.68 0.16 276.93)";
+
+		// Dynamically derive dark chart colors by lightness adjustments around the primary tone
+		const { l: pL, c: pC, h: pH } = ColorMath.parseOklch(primaryColor);
+		const darkChartAdjustments = [
+			{ dl: +8, dc: -0.02, dh: 0 }, // a bit lighter & slightly less chroma for contrast
+			{ dl: 0, dc: 0, dh: -5 }, // base
+			{ dl: -6, dc: +0.02, dh: +5 }, // darker, more chroma
+			{ dl: -12, dc: -0.01, dh: +10 }, // much darker, slight hue shift
+			{ dl: -18, dc: -0.04, dh: +15 }, // darkest
+		];
+
+		const darkChartVars: CssVars = {};
+		darkChartAdjustments.forEach((adj, i) => {
+			const newL = ColorMath.clamp(pL * 100 + adj.dl, 5, 95); // compute lightness in 0-100 range
+			const newC = Math.max(0.01, pC + adj.dc);
+			const newH = (pH + adj.dh + 360) % 360;
+			const formatted = ColorMath.formatOklch(newL, newC, newH);
+			darkChartVars[`--chart-${i + 1}`] = normalizeFull(formatted, formatted);
+		});
+
+		return {
+			"--background": findAndNormalize(
+				"base-900",
+				tonalScale,
+				baseScale,
+				"oklch(0.21 0.04 264.04)"
+			),
+			"--foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.93 0.01 256.71)"
+			),
+			"--card": findAndNormalize("base-800", tonalScale, baseScale, "oklch(0.28 0.04 260.33)"),
+			"--card-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.93 0.01 256.71)"
+			),
+			"--popover": findAndNormalize("base-800", tonalScale, baseScale, "oklch(0.28 0.04 260.33)"),
+			"--popover-foreground": findAndNormalize(
+				"neutral-50",
+				tonalScale,
+				neutralScale,
+				"oklch(0.93 0.01 256.71)"
+			),
+			"--primary": normalizeFull(primaryColor, "oklch(0.68 0.16 276.93)"),
+			"--primary-foreground": findAndNormalize(
+				"neutral-900",
+				tonalScale,
+				neutralScale,
+				"oklch(0.21 0.04 264.04)"
+			),
+			"--secondary": findAndNormalize(
+				"neutral-700",
+				tonalScale,
+				neutralScale,
+				"oklch(0.34 0.03 261.83)"
+			),
+			"--secondary-foreground": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.87 0.01 261.81)"
+			),
+			"--muted": findAndNormalize("base-800", tonalScale, baseScale, "oklch(0.28 0.04 260.33)"),
+			"--muted-foreground": findAndNormalize(
+				"neutral-400",
+				tonalScale,
+				neutralScale,
+				"oklch(0.71 0.02 261.33)"
+			),
+			"--accent": findAndNormalize(
+				"neutral-700",
+				tonalScale,
+				neutralScale,
+				"oklch(0.37 0.03 259.73)"
+			),
+			"--accent-foreground": findAndNormalize(
+				"neutral-200",
+				tonalScale,
+				neutralScale,
+				"oklch(0.87 0.01 261.81)"
+			),
+			"--destructive": normalizeFull(semanticColors.error.color, "oklch(0.64 0.21 25.39)"),
+			"--border": findAndNormalize(
+				"neutral-700",
+				tonalScale,
+				neutralScale,
+				"oklch(0.45 0.03 257.68)"
+			),
+			"--input": findAndNormalize(
+				"neutral-700",
+				tonalScale,
+				neutralScale,
+				"oklch(0.45 0.03 257.68)"
+			),
+			"--ring": normalizeFull(primaryColor, "oklch(0.68 0.16 276.93)"),
+			"--sidebar": findAndNormalize("base-800", tonalScale, baseScale, "oklch(0.28 0.04 260.33)"),
 			"--sidebar-foreground": findAndNormalize(
 				"neutral-50",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(0.93 0.01 256.71)"
 			),
-			"--sidebar-border": findAndNormalize(
-				"neutral-800",
+			"--sidebar-primary": normalizeFull(primaryColor, "oklch(0.68 0.16 276.93)"),
+			"--sidebar-primary-foreground": findAndNormalize(
+				"neutral-900",
 				tonalScale,
 				neutralScale,
-				"oklch(1 0 0 / 10%)"
-			),
-			"--sidebar-primary": findAndNormalize(
-				"primary-500",
-				tonalScale,
-				neutralScale,
-				"oklch(0.488 0.243 264.376)"
-			),
-			"--sidebar-primary-foreground": normalizeFull(
-				ColorMath.formatOklch(primaryForeground.l, primaryForeground.c, primaryForeground.h),
-				"oklch(0.985 0 0)"
+				"oklch(0.21 0.04 264.04)"
 			),
 			"--sidebar-accent": findAndNormalize(
-				"primary-800",
+				"neutral-700",
 				tonalScale,
 				neutralScale,
-				"oklch(0.269 0 0)"
+				"oklch(0.37 0.03 259.73)"
 			),
 			"--sidebar-accent-foreground": findAndNormalize(
-				"primary-100",
+				"neutral-200",
 				tonalScale,
 				neutralScale,
-				"oklch(0.985 0 0)"
+				"oklch(0.87 0.01 261.81)"
 			),
-			"--sidebar-ring": findAndNormalize(
-				"primary-400",
+			"--sidebar-border": findAndNormalize(
+				"neutral-700",
 				tonalScale,
 				neutralScale,
-				"oklch(0.556 0 0)"
+				"oklch(0.45 0.03 257.68)"
 			),
+			"--sidebar-ring": normalizeFull(primaryColor, "oklch(0.68 0.16 276.93)"),
 
-			...chartColors.dark,
+			// Dark mode shadows
+			"--shadow-2xs": "0 1px 3px 0px oklch(0.00 0 0 / 0.05)",
+			"--shadow-xs": "0 1px 3px 0px oklch(0.00 0 0 / 0.05)",
+			"--shadow-sm": "0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 1px 2px -1px oklch(0.00 0 0 / 0.10)",
+			"--shadow": "0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 1px 2px -1px oklch(0.00 0 0 / 0.10)",
+			"--shadow-md": "0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 2px 4px -1px oklch(0.00 0 0 / 0.10)",
+			"--shadow-lg": "0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 4px 6px -1px oklch(0.00 0 0 / 0.10)",
+			"--shadow-xl": "0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 8px 10px -1px oklch(0.00 0 0 / 0.10)",
+			"--shadow-2xl": "0 1px 3px 0px oklch(0.00 0 0 / 0.25)",
+
+			...darkChartVars,
 		};
 	}
 
@@ -339,6 +365,19 @@ export class ShadcnExporter {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
 }`;
 
 		const light = this.formatVars(this.lightVars(method), ":root");
