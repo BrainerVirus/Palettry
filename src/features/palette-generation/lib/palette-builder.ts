@@ -34,6 +34,20 @@ export class PaletteBuilder {
 					l: currentL,
 					c: adjustedChroma,
 					h: baseH,
+					foreground: ColorMath.formatOklch(
+						ColorMath.getContrastingForegroundColor(
+							{ l: currentL, c: adjustedChroma, h: baseH },
+							4.5
+						).l,
+						ColorMath.getContrastingForegroundColor(
+							{ l: currentL, c: adjustedChroma, h: baseH },
+							4.5
+						).c,
+						ColorMath.getContrastingForegroundColor(
+							{ l: currentL, c: adjustedChroma, h: baseH },
+							4.5
+						).h
+					),
 				};
 			}
 		);
@@ -119,47 +133,55 @@ export class PaletteBuilder {
 					l,
 					c,
 					h: baseH,
+					foreground: ColorMath.formatOklch(
+						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).l,
+						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).c,
+						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).h
+					),
 				};
 			}
 		);
 		return neutralScale;
 	}
 
-	/**
-	 * Build base scale for backgrounds (main bg for light/dark mode)
-	 * See: make-colors.md and make-colors-5.md step 7
-	 */
-	static buildBaseScale(): ColorShade[] {
-		return [
-			{
-				scale: "base-100",
-				color: "oklch(100% 0 360)",
-				l: 100,
-				c: 0,
-				h: 360,
-			},
-			{
-				scale: "base-95",
-				color: "oklch(0.996 0.000 360.000)",
-				l: 98,
-				c: 0.005,
-				h: 303.89,
-			},
-			{
-				scale: "base-10",
-				color: "oklch(15% 0.008 303.89)",
-				l: 15,
-				c: 0.008,
-				h: 303.89,
-			},
-			{
-				scale: "base-0",
-				color: "oklch(0% 0 360)",
-				l: 0,
-				c: 0,
-				h: 360,
-			},
+	static buildBaseScale(primaryColor: string): ColorShade[] {
+		// Base colors with subtle primary color tint for brand cohesion and lighter scale
+		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+		const baseColors = [
+			{ scale: "base-50", l: 100, c: 0 }, // Pure white
+			{ scale: "base-100", l: 99, c: 0.001 }, // Near white slight tint
+			{ scale: "base-200", l: 98, c: 0.002 },
+			{ scale: "base-300", l: 97, c: 0.004 },
+			{ scale: "base-400", l: 94, c: 0.006 },
+			{ scale: "base-500", l: 50, c: 0 }, // mid neutral
+			{ scale: "base-600", l: 40, c: 0.005 },
+			{ scale: "base-700", l: 30, c: 0.004 },
+			{ scale: "base-800", l: 20, c: 0.003 },
+			{ scale: "base-900", l: 10, c: 0.002 },
+			{ scale: "base-950", l: 5, c: 0.001 },
 		];
+
+		return baseColors.map((shade) => ({
+			scale: shade.scale,
+			color: ColorMath.formatOklch(shade.l, shade.c, shade.c === 0 ? 0 : baseH), // Use primary hue for tinted bases
+			l: shade.l,
+			c: shade.c,
+			h: shade.c === 0 ? 0 : baseH,
+			foreground: ColorMath.formatOklch(
+				ColorMath.getContrastingForegroundColor(
+					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
+					4.5 // WCAG AA contrast
+				).l,
+				ColorMath.getContrastingForegroundColor(
+					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
+					4.5
+				).c,
+				ColorMath.getContrastingForegroundColor(
+					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
+					4.5
+				).h
+			),
+		}));
 	}
 
 	static buildChartScale(primaryColor: string): ColorShade[] {
@@ -191,6 +213,11 @@ export class PaletteBuilder {
 				l: finalL,
 				c: finalC,
 				h: finalH,
+				foreground: ColorMath.formatOklch(
+					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).l,
+					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).c,
+					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).h
+				),
 			};
 		});
 
@@ -207,7 +234,7 @@ export class PaletteBuilder {
 			return {
 				name: `Generated Palette`,
 				description: `A complete color system derived from ${primaryColor}`,
-				baseScale: this.buildBaseScale(),
+				baseScale: this.buildBaseScale(primaryColor),
 				tonalScale: this.buildTonalScale(primaryColor),
 				semanticColors: this.buildSemanticColors(primaryColor),
 				neutralScale: this.buildNeutralScale(primaryColor),
@@ -219,23 +246,30 @@ export class PaletteBuilder {
 				name: "Invalid Palette",
 				description: `Failed to generate: ${(error as Error).message}`,
 				baseScale: [
-					{ scale: "base-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-95", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-10", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-0", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "base-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				tonalScale: [
-					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				semanticColors: {
 					success: { color: "", foreground: "" },
@@ -244,24 +278,24 @@ export class PaletteBuilder {
 					info: { color: "", foreground: "" },
 				},
 				neutralScale: [
-					{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				chartScale: [
-					{ scale: "chart-1", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-2", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-3", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-4", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-5", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-1", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-2", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-3", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-4", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-5", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 			};
 		}
