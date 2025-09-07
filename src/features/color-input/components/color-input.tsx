@@ -19,7 +19,7 @@ import {
 } from "@/features/shared/constants/color-constraints";
 import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
-import { clamp } from "@/features/shared/lib/utils";
+import { clamp, normalizeHue } from "@/features/shared/lib/utils";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);
@@ -74,9 +74,8 @@ export default function ColorInput() {
 		scheduleLivePrimarySync();
 	};
 	const onHChangeLive = (val: number) => {
-		let v = val % 360;
-		if (v < 0) v += 360;
-		hSignal.value = clamp(v, H_MIN, H_MAX);
+		const normalizedHue = normalizeHue(val);
+		hSignal.value = clamp(normalizedHue, H_MIN, H_MAX);
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
@@ -86,9 +85,8 @@ export default function ColorInput() {
 	const onCCommit = (val: number) =>
 		pushToSignal(lSignal.value, clamp(val, C_MIN, C_MAX), hSignal.value);
 	const onHCommit = (val: number) => {
-		let v = val % 360;
-		if (v < 0) v += 360;
-		pushToSignal(lSignal.value, cSignal.value, clamp(v, H_MIN, H_MAX));
+		const normalizedHue = normalizeHue(val);
+		pushToSignal(lSignal.value, cSignal.value, clamp(normalizedHue, H_MIN, H_MAX));
 	};
 
 	const onRawChange = (s: string) => {
@@ -97,7 +95,7 @@ export default function ColorInput() {
 			const parsed = ColorMath.parseOklch(s.trim());
 			const nextL = clamp(parsed.l, L_MIN, L_MAX);
 			const nextC = clamp(parsed.c, C_MIN, C_MAX);
-			const nextH = clamp(parsed.h, H_MIN, H_MAX);
+			const nextH = clamp(normalizeHue(parsed.h), H_MIN, H_MAX);
 			lSignal.value = nextL;
 			cSignal.value = nextC;
 			hSignal.value = nextH;

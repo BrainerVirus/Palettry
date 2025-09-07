@@ -1,5 +1,7 @@
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
+import { clamp, normalizeHue } from "@/features/shared/lib/utils";
 
+export { clamp };
 export const formatOKLCH = (l: number, c: number, h: number) => ColorMath.formatOklch(l, c, h);
 
 export const getPreviewColors = (l: number, c: number, h: number) => {
@@ -14,3 +16,5 @@ export const getPreviewColors = (l: number, c: number, h: number) => {
 		return { bg: "transparent", fg: "currentColor" };
 	}
 };
+
+export { normalizeHue };
