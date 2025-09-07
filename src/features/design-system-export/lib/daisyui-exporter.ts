@@ -207,7 +207,7 @@ ${lines}
 		return `@plugin "daisyui/theme" {
   name: "dark";
   default: false;
-  prefersdark: false;
+  prefersdark: true;
   color-scheme: "dark";
 ${lines}
 }`;
