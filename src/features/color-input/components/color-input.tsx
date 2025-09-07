@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { primaryColor, setPrimaryColor } from "@/features/palette-generation/store/palette-store";
+import { signal } from "@preact/signals-react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Card } from "@/features/shared/components/card";
 import { Button } from "@/features/shared/components/button";
@@ -45,103 +46,116 @@ function PresetSwatch({ value, onSelect }: { value: string; onSelect: (v: string
 	);
 }
 
+const lSignal = signal<number>(60);
+const cSignal = signal<number>(0.18);
+const hSignal = signal<number>(240);
+const rawSignal = signal<string>("oklch(60% 0.18 240)");
+const errorSignal = signal<string | null>(null);
+
 export default function ColorInput() {
 	useSignals();
 
-	const [l, setL] = useState<number>(60);
-	const [c, setC] = useState<number>(0.18);
-	const [h, setH] = useState<number>(240);
-	const [raw, setRaw] = useState<string>("oklch(60% 0.18 240)");
-	const [error, setError] = useState<string | null>(null);
-
-	// Sync local UI when signal changes externally (e.g., presets elsewhere)
-	useEffect(() => {
+	// One-time initialization from current primaryColor
+	const initRef = useRef(false);
+	if (!initRef.current) {
 		try {
 			const parsed = ColorMath.parseOklch(primaryColor.value);
-			setL(parsed.l);
-			setC(parsed.c);
-			setH(parsed.h);
-			setRaw(formatOKLCH(parsed.l, parsed.c, parsed.h));
-			setError(null);
+			lSignal.value = parsed.l;
+			cSignal.value = parsed.c;
+			hSignal.value = parsed.h;
+			rawSignal.value = formatOKLCH(parsed.l, parsed.c, parsed.h);
+			errorSignal.value = null;
 		} catch {
-			setError("Invalid OKLCH in store");
+			// keep defaults
 		}
-	}, [primaryColor.value]);
+		initRef.current = true;
+	}
 
-	// Debounce push to the signal for smoother slider UX
-	const debounceId = useRef<number | null>(null);
+	// Immediate commit helper
 	const pushToSignal = (nextL: number, nextC: number, nextH: number) => {
 		const formatted = formatOKLCH(nextL, nextC, nextH);
-		setRaw(formatted);
-		if (debounceId.current) window.clearTimeout(debounceId.current);
-		debounceId.current = window.setTimeout(() => {
-			setPrimaryColor(formatted);
-		}, 80);
+		rawSignal.value = formatted;
+		setPrimaryColor(formatted);
 	};
 
-	const onLChange = (val: number) => {
-		const v = clamp(val, L_MIN, L_MAX);
-		setL(v);
-		setError(null);
-		pushToSignal(v, c, h);
+	// Real-time palette sync while dragging (throttled to rAF)
+	const liveFrame = useRef<number | null>(null);
+	const scheduleLivePrimarySync = () => {
+		if (liveFrame.current) cancelAnimationFrame(liveFrame.current);
+		liveFrame.current = requestAnimationFrame(() => {
+			pushToSignal(lSignal.value, cSignal.value, hSignal.value);
+		});
 	};
 
-	const onCChange = (val: number) => {
-		const v = clamp(val, C_MIN, C_MAX);
-		setC(v);
-		setError(null);
-		pushToSignal(l, v, h);
+	// Live updates + commit (both trigger schedule)
+	const onLChangeLive = (val: number) => {
+		lSignal.value = clamp(val, L_MIN, L_MAX);
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
 	};
-
-	const onHChange = (val: number) => {
+	const onCChangeLive = (val: number) => {
+		cSignal.value = clamp(val, C_MIN, C_MAX);
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
+	};
+	const onHChangeLive = (val: number) => {
 		let v = val % 360;
 		if (v < 0) v += 360;
-		v = clamp(v, H_MIN, H_MAX);
-		setH(v);
-		setError(null);
-		pushToSignal(l, c, v);
+		hSignal.value = clamp(v, H_MIN, H_MAX);
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
+	};
+	// Commit handlers ensure final exact value applied immediately
+	const onLCommit = (val: number) =>
+		pushToSignal(clamp(val, L_MIN, L_MAX), cSignal.value, hSignal.value);
+	const onCCommit = (val: number) =>
+		pushToSignal(lSignal.value, clamp(val, C_MIN, C_MAX), hSignal.value);
+	const onHCommit = (val: number) => {
+		let v = val % 360;
+		if (v < 0) v += 360;
+		pushToSignal(lSignal.value, cSignal.value, clamp(v, H_MIN, H_MAX));
 	};
 
 	const onRawChange = (s: string) => {
-		setRaw(s);
+		rawSignal.value = s;
 		try {
 			const parsed = ColorMath.parseOklch(s.trim());
 			const nextL = clamp(parsed.l, L_MIN, L_MAX);
 			const nextC = clamp(parsed.c, C_MIN, C_MAX);
 			const nextH = clamp(parsed.h, H_MIN, H_MAX);
-			setL(nextL);
-			setC(nextC);
-			setH(nextH);
-			setError(null);
+			lSignal.value = nextL;
+			cSignal.value = nextC;
+			hSignal.value = nextH;
+			errorSignal.value = null;
 			pushToSignal(nextL, nextC, nextH);
 		} catch {
-			setError("Expected: oklch(60% 0.18 240)");
+			errorSignal.value = "Expected: oklch(60% 0.18 240)";
 		}
 	};
 
 	const onRawBlur = () => {
 		try {
-			const parsed = ColorMath.parseOklch(raw.trim());
+			const parsed = ColorMath.parseOklch(rawSignal.value.trim());
 			const formatted = formatOKLCH(parsed.l, parsed.c, parsed.h);
-			setRaw(formatted);
-			setError(null);
+			rawSignal.value = formatted;
+			errorSignal.value = null;
 		} catch {
-			// keep user input to allow fixing
+			// ignore formatting errors; user input retained for correction
 		}
 	};
 
 	const preview = useMemo(() => {
 		try {
-			const color = { l, c, h };
+			const color = { l: lSignal.value, c: cSignal.value, h: hSignal.value };
 			const fg = ColorMath.getContrastingForegroundColor(color, 7.0);
 			return {
-				bg: formatOKLCH(l, c, h),
+				bg: formatOKLCH(lSignal.value, cSignal.value, hSignal.value),
 				fg: formatOKLCH(fg.l, fg.c, fg.h),
 			};
 		} catch {
 			return { bg: "transparent", fg: "currentColor" };
 		}
-	}, [l, c, h]);
+	}, [lSignal.value, cSignal.value, hSignal.value]);
 
 	const presets = [
 		"oklch(49.6% 0.272 303.89)",
@@ -153,14 +167,14 @@ export default function ColorInput() {
 	const applyPreset = (s: string) => {
 		try {
 			const p = ColorMath.parseOklch(s);
-			setL(p.l);
-			setC(p.c);
-			setH(p.h);
-			setRaw(formatOKLCH(p.l, p.c, p.h));
-			setError(null);
+			lSignal.value = p.l;
+			cSignal.value = p.c;
+			hSignal.value = p.h;
+			rawSignal.value = formatOKLCH(p.l, p.c, p.h);
+			errorSignal.value = null;
 			setPrimaryColor(formatOKLCH(p.l, p.c, p.h));
 		} catch {
-			setError("Invalid preset");
+			errorSignal.value = "Invalid preset";
 		}
 	};
 
@@ -177,7 +191,7 @@ export default function ColorInput() {
 					<div
 						className="flex h-10 min-w-24 items-center justify-center rounded border px-3 font-mono text-sm"
 						style={{ background: preview.bg, color: preview.fg }}
-						title={raw}
+						title={rawSignal.value}
 					>
 						Aa
 					</div>
@@ -188,16 +202,16 @@ export default function ColorInput() {
 					<Label htmlFor="oklch">OKLCH</Label>
 					<Input
 						id="oklch"
-						value={raw}
+						value={rawSignal.value}
 						onChange={(e) => onRawChange(e.target.value)}
 						onBlur={onRawBlur}
 						placeholder="oklch(60% 0.18 240)"
-						className={`font-mono text-sm ${error ? "border-red-500" : ""}`}
+						className={`font-mono text-sm ${errorSignal.value ? "border-red-500" : ""}`}
 						autoComplete="off"
 						spellCheck={false}
 					/>
-					{error ? (
-						<div className="text-xs text-red-500">{error}</div>
+					{errorSignal.value ? (
+						<div className="text-xs text-red-500">{errorSignal.value}</div>
 					) : (
 						<div className="text-muted-foreground text-xs">
 							Format: oklch(L% C H) — L 0–100, C 0–0.4, H 0–360
@@ -217,17 +231,22 @@ export default function ColorInput() {
 								min={L_MIN}
 								max={L_MAX}
 								step={0.1}
-								value={l}
-								onChange={(e) => onLChange(parseFloat(e.target.value))}
+								value={lSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onLChangeLive(v);
+									onLCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[l]}
+							value={[lSignal.value]}
 							min={L_MIN}
 							max={L_MAX}
 							step={0.1}
-							onValueChange={([v]) => onLChange(v)}
+							onValueChange={([v]) => onLChangeLive(v)}
+							onValueCommit={([v]) => onLCommit(v)}
 						/>
 					</div>
 
@@ -241,17 +260,22 @@ export default function ColorInput() {
 								min={C_MIN}
 								max={C_MAX}
 								step={0.001}
-								value={c}
-								onChange={(e) => onCChange(parseFloat(e.target.value))}
+								value={cSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onCChangeLive(v);
+									onCCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[c]}
+							value={[cSignal.value]}
 							min={C_MIN}
 							max={C_MAX}
 							step={0.001}
-							onValueChange={([v]) => onCChange(v)}
+							onValueChange={([v]) => onCChangeLive(v)}
+							onValueCommit={([v]) => onCCommit(v)}
 						/>
 					</div>
 
@@ -265,17 +289,22 @@ export default function ColorInput() {
 								min={H_MIN}
 								max={H_MAX}
 								step={0.1}
-								value={h}
-								onChange={(e) => onHChange(parseFloat(e.target.value))}
+								value={hSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onHChangeLive(v);
+									onHCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[h]}
+							value={[hSignal.value]}
 							min={H_MIN}
 							max={H_MAX}
 							step={0.1}
-							onValueChange={([v]) => onHChange(v)}
+							onValueChange={([v]) => onHChangeLive(v)}
+							onValueCommit={([v]) => onHCommit(v)}
 						/>
 					</div>
 				</div>
