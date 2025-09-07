@@ -1,6 +1,7 @@
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { clampChroma } from "culori";
 import type { ColorShade } from "@/features/shared/types/global";
+import { normalizeHue } from "@/features/shared/lib/utils";
 
 type CssVars = Record<string, string>;
 
@@ -33,11 +34,11 @@ export const findAndNormalize = (
 // Generates a set of 5 distinct and vibrant chart colors.
 export const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVars } => {
 	const hues = [
-		(primaryHue + 30) % 360,
-		(primaryHue + 90) % 360,
-		(primaryHue + 180) % 360,
-		(primaryHue + 270) % 360,
-		(primaryHue - 30) % 360,
+		normalizeHue(primaryHue + 30),
+		normalizeHue(primaryHue + 90),
+		normalizeHue(primaryHue + 180),
+		normalizeHue(primaryHue + 270),
+		normalizeHue(primaryHue - 30),
 	];
 	const lightModePersonality = { l: 70, c: 0.15 };
 	const darkModePersonality = { l: 75, c: 0.2 };
