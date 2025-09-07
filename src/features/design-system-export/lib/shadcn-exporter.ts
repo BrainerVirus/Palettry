@@ -86,8 +86,7 @@ export class ShadcnExporter {
 			"--border": "oklch(1 0 0 / 10%)",
 			"--input": "oklch(1 0 0 / 15%)",
 			"--ring": normalizeFull(primaryFg, primaryFg),
-			"--chart-1": normalizeFull(primaryFg, primaryFg),
-			...chartVars, // charts 2..n override, we already set 1 explicitly
+			...chartVars,
 			"--sidebar": this.pick(method, "neutral-800", "oklch(0.21 0.006 285.885)"),
 			"--sidebar-foreground": this.pick(method, "base-50", "oklch(0.985 0 0)"),
 			"--sidebar-primary": normalizeFull(primary, primary),
