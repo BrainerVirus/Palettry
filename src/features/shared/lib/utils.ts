@@ -12,3 +12,7 @@ export function $<T extends Element = Element>(selector: string): T | null {
 export function $$<T extends Element = Element>(selector: string): NodeListOf<T> {
 	return document.querySelectorAll(selector) as NodeListOf<T>;
 }
+
+export function clamp(value: number, min: number, max: number): number {
+	return Math.max(min, Math.min(max, value));
+}
