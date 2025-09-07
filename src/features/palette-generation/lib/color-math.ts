@@ -1,4 +1,12 @@
 import type { OklchColor } from "@/features/shared/types/global";
+import {
+	L_MIN,
+	L_MAX,
+	C_MIN,
+	C_MAX,
+	H_MIN,
+	H_MAX,
+} from "@/features/shared/constants/color-constraints";
 
 import { converter, wcagLuminance } from "culori";
 
@@ -9,7 +17,7 @@ export class ColorMath {
 	/**
 	 * Parse OKLCH string into components.
 	 * Expects: "oklch(L% C H)"
-	 * Returns: L (0-100), C (0-~0.5), H (0-360)
+	 * Returns: L (L_MIN-L_MAX), C (C_MIN-C_MAX), H (H_MIN-H_MAX)
 	 */
 	static parseOklch(oklchString: string): OklchColor {
 		const match = oklchString.match(/oklch\(\s*([0-9.]+)(%?)\s+([0-9.]+)\s+([0-9.]+)\s*\)/);
@@ -23,22 +31,22 @@ export class ColorMath {
 		const lightness = isPercent ? l : l * 100;
 
 		return {
-			l: lightness, // 0-100
-			c: parseFloat(match[3]), // 0 - ~0.5
-			h: parseFloat(match[4]), // 0-360
+			l: lightness, // L_MIN-L_MAX
+			c: parseFloat(match[3]), // C_MIN - C_MAX
+			h: parseFloat(match[4]), // H_MIN-H_MAX
 		};
 	}
 
 	/**
 	 * Format OKLCH components into string.
-	 * Expects: L (0-100), C (0-~0.5), H (0-360)
+	 * Expects: L (L_MIN-L_MAX), C (C_MIN-C_MAX), H (H_MIN-H_MAX)
 	 * Formats: "oklch(L.X% C.XXX H.XX)"
 	 */
 	static formatOklch(l: number, c: number, h: number): string {
 		// Ensure values are within typical ranges for formatting, even if clamped elsewhere
-		const clampedL = ColorMath.clamp(l, 0, 100);
-		const clampedC = ColorMath.clamp(c, 0, 0.5); // Max chroma is around 0.37 for sRGB gamut
-		const normalizedH = h % 360; // Ensure hue wraps around
+		const clampedL = ColorMath.clamp(l, L_MIN, L_MAX);
+		const clampedC = ColorMath.clamp(c, C_MIN, C_MAX); // Max chroma is around 0.37 for sRGB gamut
+		const normalizedH = h % H_MAX; // Ensure hue wraps around
 
 		return `oklch(${clampedL.toFixed(1)}% ${clampedC.toFixed(3)} ${normalizedH.toFixed(2)})`;
 	}
@@ -72,12 +80,12 @@ export class ColorMath {
 	 */
 	static validateOklch(color: OklchColor): boolean {
 		return (
-			color.l >= 0 &&
-			color.l <= 100 &&
-			color.c >= 0 &&
-			color.c <= 0.5 && // Max chroma in sRGB gamut is ~0.37
-			color.h >= 0 &&
-			color.h <= 360
+			color.l >= L_MIN &&
+			color.l <= L_MAX &&
+			color.c >= C_MIN &&
+			color.c <= C_MAX && // Max chroma in sRGB gamut is ~0.37
+			color.h >= H_MIN &&
+			color.h <= H_MAX
 		);
 	}
 

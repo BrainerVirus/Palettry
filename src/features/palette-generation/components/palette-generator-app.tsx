@@ -1,7 +1,5 @@
-import React from "react";
-
 import ColorInput from "@/features/color-input/components/color-input";
-import PaletteDisplay from "@/features/palette-generation/components/palette-display";
+import PaletteDisplay from "@/features/palette-display/components/palette-display";
 import ExportPanel from "@/features/design-system-export/components/export-panel";
 
 // Import your signals from the store

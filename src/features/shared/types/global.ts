@@ -10,6 +10,7 @@ export interface ColorShade {
 	l: number;
 	c: number;
 	h: number;
+	foreground?: string;
 }
 
 export interface SemanticColorSet {

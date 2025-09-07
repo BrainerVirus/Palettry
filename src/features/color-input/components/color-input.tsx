@@ -1,166 +1,152 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useCallback } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { primaryColor, setPrimaryColor } from "@/features/palette-generation/store/palette-store";
+import { signal } from "@preact/signals-react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Card } from "@/features/shared/components/card";
 import { Button } from "@/features/shared/components/button";
 import { Input } from "@/features/shared/components/input";
 import { Label } from "@/features/shared/components/label";
 import { Slider } from "@/features/shared/components/slider";
+import PresetSwatch from "@/features/shared/components/preset-swatch";
+import {
+	L_MIN,
+	L_MAX,
+	C_MIN,
+	C_MAX,
+	H_MIN,
+	H_MAX,
+} from "@/features/shared/constants/color-constraints";
+import { PRESETS } from "@/features/color-input/constants/color-presets";
+import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
+import { clamp } from "@/features/shared/lib/utils";
+import { useDebounceCallback } from "@/features/shared/hooks";
 
-const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-const formatOKLCH = (l: number, c: number, h: number) => ColorMath.formatOklch(l, c, h);
-
-const L_MIN = 0;
-const L_MAX = 100;
-const C_MIN = 0;
-const C_MAX = 0.4; // UI bound; downstream handles gamut
-const H_MIN = 0;
-const H_MAX = 360;
-
-function PresetSwatch({ value, onSelect }: { value: string; onSelect: (v: string) => void }) {
-	const fg = useMemo(() => {
-		try {
-			const p = ColorMath.parseOklch(value);
-			const f = ColorMath.getContrastingForegroundColor(p, 7.0);
-			return formatOKLCH(f.l, f.c, f.h);
-		} catch {
-			return "black";
-		}
-	}, [value]);
-
-	return (
-		<Button
-			type="button"
-			variant="outline"
-			onClick={() => onSelect(value)}
-			title={value}
-			aria-label={`Preset ${value}`}
-			className="hover:ring-ring h-9 min-w-[11rem] justify-center border font-mono text-xs transition-all hover:ring-2"
-			style={{ background: value, color: fg }}
-		>
-			{value}
-		</Button>
-	);
-}
+const lSignal = signal<number>(60);
+const cSignal = signal<number>(0.18);
+const hSignal = signal<number>(240);
+const rawSignal = signal<string>("oklch(60% 0.18 240)");
+const errorSignal = signal<string | null>(null);
 
 export default function ColorInput() {
 	useSignals();
 
-	const [l, setL] = useState<number>(60);
-	const [c, setC] = useState<number>(0.18);
-	const [h, setH] = useState<number>(240);
-	const [raw, setRaw] = useState<string>("oklch(60% 0.18 240)");
-	const [error, setError] = useState<string | null>(null);
-
-	// Sync local UI when signal changes externally (e.g., presets elsewhere)
-	useEffect(() => {
+	// Debounced validation function
+	const validateAndUpdate = useCallback((input: string) => {
 		try {
-			const parsed = ColorMath.parseOklch(primaryColor.value);
-			setL(parsed.l);
-			setC(parsed.c);
-			setH(parsed.h);
-			setRaw(formatOKLCH(parsed.l, parsed.c, parsed.h));
-			setError(null);
-		} catch {
-			setError("Invalid OKLCH in store");
-		}
-	}, [primaryColor.value]);
-
-	// Debounce push to the signal for smoother slider UX
-	const debounceId = useRef<number | null>(null);
-	const pushToSignal = (nextL: number, nextC: number, nextH: number) => {
-		const formatted = formatOKLCH(nextL, nextC, nextH);
-		setRaw(formatted);
-		if (debounceId.current) window.clearTimeout(debounceId.current);
-		debounceId.current = window.setTimeout(() => {
-			setPrimaryColor(formatted);
-		}, 80);
-	};
-
-	const onLChange = (val: number) => {
-		const v = clamp(val, L_MIN, L_MAX);
-		setL(v);
-		setError(null);
-		pushToSignal(v, c, h);
-	};
-
-	const onCChange = (val: number) => {
-		const v = clamp(val, C_MIN, C_MAX);
-		setC(v);
-		setError(null);
-		pushToSignal(l, v, h);
-	};
-
-	const onHChange = (val: number) => {
-		let v = val % 360;
-		if (v < 0) v += 360;
-		v = clamp(v, H_MIN, H_MAX);
-		setH(v);
-		setError(null);
-		pushToSignal(l, c, v);
-	};
-
-	const onRawChange = (s: string) => {
-		setRaw(s);
-		try {
-			const parsed = ColorMath.parseOklch(s.trim());
+			const parsed = ColorMath.parseOklch(input.trim());
 			const nextL = clamp(parsed.l, L_MIN, L_MAX);
 			const nextC = clamp(parsed.c, C_MIN, C_MAX);
-			const nextH = clamp(parsed.h, H_MIN, H_MAX);
-			setL(nextL);
-			setC(nextC);
-			setH(nextH);
-			setError(null);
+			const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
+			lSignal.value = nextL;
+			cSignal.value = nextC;
+			hSignal.value = nextH;
+			errorSignal.value = null;
 			pushToSignal(nextL, nextC, nextH);
 		} catch {
-			setError("Expected: oklch(60% 0.18 240)");
+			errorSignal.value = "Expected: oklch(60% 0.18 240)";
 		}
+	}, []);
+
+	// Debounced version of the validation function
+	const debouncedValidate = useDebounceCallback(validateAndUpdate, 500);
+
+	// One-time initialization from current primaryColor
+	const initRef = useRef(false);
+	if (!initRef.current) {
+		try {
+			const parsed = ColorMath.parseOklch(primaryColor.value);
+			lSignal.value = parsed.l;
+			cSignal.value = parsed.c;
+			hSignal.value = parsed.h;
+			rawSignal.value = formatOKLCH(parsed.l, parsed.c, parsed.h);
+			errorSignal.value = null;
+		} catch {
+			// keep defaults
+		}
+		initRef.current = true;
+	}
+
+	// Immediate commit helper
+	const pushToSignal = (nextL: number, nextC: number, nextH: number) => {
+		const formatted = formatOKLCH(nextL, nextC, nextH);
+		rawSignal.value = formatted;
+		setPrimaryColor(formatted);
 	};
+
+	// Real-time palette sync while dragging (throttled to rAF)
+	const liveFrame = useRef<number | null>(null);
+	const scheduleLivePrimarySync = () => {
+		if (liveFrame.current) cancelAnimationFrame(liveFrame.current);
+		liveFrame.current = requestAnimationFrame(() => {
+			pushToSignal(lSignal.value, cSignal.value, hSignal.value);
+		});
+	};
+
+	// Live updates + commit (both trigger schedule)
+	const onLChangeLive = (val: number) => {
+		lSignal.value = clamp(val, L_MIN, L_MAX);
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
+	};
+	const onCChangeLive = (val: number) => {
+		cSignal.value = clamp(val, C_MIN, C_MAX);
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
+	};
+	const onHChangeLive = (val: number) => {
+		// For hue slider, we want to clamp to 0-360 range without wrapping
+		// Since hue is circular, but for UX we want it to stop at 360
+		const clampedHue = Math.max(H_MIN, Math.min(H_MAX, val));
+		hSignal.value = clampedHue;
+		errorSignal.value = null;
+		scheduleLivePrimarySync();
+	};
+	// Commit handlers ensure final exact value applied immediately
+	const onLCommit = (val: number) =>
+		pushToSignal(clamp(val, L_MIN, L_MAX), cSignal.value, hSignal.value);
+	const onCCommit = (val: number) =>
+		pushToSignal(lSignal.value, clamp(val, C_MIN, C_MAX), hSignal.value);
+	const onHCommit = (val: number) => {
+		const clampedHue = Math.max(H_MIN, Math.min(H_MAX, val));
+		pushToSignal(lSignal.value, cSignal.value, clampedHue);
+	};
+
+	const onRawChange = useCallback(
+		(s: string) => {
+			rawSignal.value = s;
+			debouncedValidate(s);
+		},
+		[debouncedValidate]
+	);
 
 	const onRawBlur = () => {
 		try {
-			const parsed = ColorMath.parseOklch(raw.trim());
+			const parsed = ColorMath.parseOklch(rawSignal.value.trim());
 			const formatted = formatOKLCH(parsed.l, parsed.c, parsed.h);
-			setRaw(formatted);
-			setError(null);
+			rawSignal.value = formatted;
+			errorSignal.value = null;
 		} catch {
-			// keep user input to allow fixing
+			// ignore formatting errors; user input retained for correction
 		}
 	};
 
-	const preview = useMemo(() => {
-		try {
-			const color = { l, c, h };
-			const fg = ColorMath.getContrastingForegroundColor(color, 7.0);
-			return {
-				bg: formatOKLCH(l, c, h),
-				fg: formatOKLCH(fg.l, fg.c, fg.h),
-			};
-		} catch {
-			return { bg: "transparent", fg: "currentColor" };
-		}
-	}, [l, c, h]);
-
-	const presets = [
-		"oklch(49.6% 0.272 303.89)",
-		"oklch(55% 0.22 25)",
-		"oklch(60% 0.18 240)",
-		"oklch(72% 0.16 140)",
-	];
+	const preview = useMemo(
+		() => getPreviewColors(lSignal.value, cSignal.value, hSignal.value),
+		[lSignal.value, cSignal.value, hSignal.value]
+	);
 
 	const applyPreset = (s: string) => {
 		try {
 			const p = ColorMath.parseOklch(s);
-			setL(p.l);
-			setC(p.c);
-			setH(p.h);
-			setRaw(formatOKLCH(p.l, p.c, p.h));
-			setError(null);
+			lSignal.value = p.l;
+			cSignal.value = p.c;
+			hSignal.value = p.h;
+			rawSignal.value = formatOKLCH(p.l, p.c, p.h);
+			errorSignal.value = null;
 			setPrimaryColor(formatOKLCH(p.l, p.c, p.h));
 		} catch {
-			setError("Invalid preset");
+			errorSignal.value = "Invalid preset";
 		}
 	};
 
@@ -177,7 +163,7 @@ export default function ColorInput() {
 					<div
 						className="flex h-10 min-w-24 items-center justify-center rounded border px-3 font-mono text-sm"
 						style={{ background: preview.bg, color: preview.fg }}
-						title={raw}
+						title={rawSignal.value}
 					>
 						Aa
 					</div>
@@ -188,16 +174,16 @@ export default function ColorInput() {
 					<Label htmlFor="oklch">OKLCH</Label>
 					<Input
 						id="oklch"
-						value={raw}
+						value={rawSignal.value}
 						onChange={(e) => onRawChange(e.target.value)}
 						onBlur={onRawBlur}
 						placeholder="oklch(60% 0.18 240)"
-						className={`font-mono text-sm ${error ? "border-red-500" : ""}`}
+						className={`font-mono text-sm ${errorSignal.value ? "border-red-500" : ""}`}
 						autoComplete="off"
 						spellCheck={false}
 					/>
-					{error ? (
-						<div className="text-xs text-red-500">{error}</div>
+					{errorSignal.value ? (
+						<div className="text-xs text-red-500">{errorSignal.value}</div>
 					) : (
 						<div className="text-muted-foreground text-xs">
 							Format: oklch(L% C H) — L 0–100, C 0–0.4, H 0–360
@@ -217,17 +203,22 @@ export default function ColorInput() {
 								min={L_MIN}
 								max={L_MAX}
 								step={0.1}
-								value={l}
-								onChange={(e) => onLChange(parseFloat(e.target.value))}
+								value={lSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onLChangeLive(v);
+									onLCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[l]}
+							value={[lSignal.value]}
 							min={L_MIN}
 							max={L_MAX}
 							step={0.1}
-							onValueChange={([v]) => onLChange(v)}
+							onValueChange={([v]) => onLChangeLive(v)}
+							onValueCommit={([v]) => onLCommit(v)}
 						/>
 					</div>
 
@@ -241,17 +232,22 @@ export default function ColorInput() {
 								min={C_MIN}
 								max={C_MAX}
 								step={0.001}
-								value={c}
-								onChange={(e) => onCChange(parseFloat(e.target.value))}
+								value={cSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onCChangeLive(v);
+									onCCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[c]}
+							value={[cSignal.value]}
 							min={C_MIN}
 							max={C_MAX}
 							step={0.001}
-							onValueChange={([v]) => onCChange(v)}
+							onValueChange={([v]) => onCChangeLive(v)}
+							onValueCommit={([v]) => onCCommit(v)}
 						/>
 					</div>
 
@@ -265,24 +261,29 @@ export default function ColorInput() {
 								min={H_MIN}
 								max={H_MAX}
 								step={0.1}
-								value={h}
-								onChange={(e) => onHChange(parseFloat(e.target.value))}
+								value={hSignal.value}
+								onChange={(e) => {
+									const v = parseFloat(e.target.value);
+									onHChangeLive(v);
+									onHCommit(v);
+								}}
 								className="w-24 text-right"
 							/>
 						</div>
 						<Slider
-							value={[h]}
+							value={[hSignal.value]}
 							min={H_MIN}
 							max={H_MAX}
 							step={0.1}
-							onValueChange={([v]) => onHChange(v)}
+							onValueChange={([v]) => onHChangeLive(v)}
+							onValueCommit={([v]) => onHCommit(v)}
 						/>
 					</div>
 				</div>
 
 				{/* Presets as color swatches */}
 				<div className="flex flex-wrap gap-2">
-					{presets.map((p) => (
+					{PRESETS.map((p) => (
 						<PresetSwatch key={p} value={p} onSelect={applyPreset} />
 					))}
 					<Button

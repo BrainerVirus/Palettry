@@ -1,11 +1,15 @@
 import { clampChroma } from "culori";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import type { ColorShade, SemanticColors, Palette } from "@/features/shared/types/global";
-import { SEMANTIC_HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
+import { SEMANTIC_HUE_CONSTRAINTS } from "@/features/shared/constants/hue-constraints";
 import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
 	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
-} from "@/features/palette-generation/constants/lightness-progression";
+} from "@/features/shared/constants/lightness-progression";
+import { NEUTRAL_CHROMA_STOPS } from "@/features/shared/constants/neutral-chroma-stops";
+import { BASE_SCALE_DEFINITIONS } from "@/features/shared/constants/base-scale-definitions";
+import { CHART_HUE_OFFSETS, CHART_TONE } from "@/features/shared/constants/chart-constants";
+import { normalizeHue } from "@/features/shared/lib/utils";
 
 export class PaletteBuilder {
 	static buildTonalScale(primaryColor: string): ColorShade[] {
@@ -28,12 +32,17 @@ export class PaletteBuilder {
 				else if (currentL <= 28) adjustedChroma = 0.14;
 				// Clamp again
 				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+				const fg = ColorMath.getContrastingForegroundColor(
+					{ l: currentL, c: adjustedChroma, h: baseH },
+					4.5
+				);
 				return {
 					scale: `primary-${scale}`,
 					color: ColorMath.formatOklch(currentL, adjustedChroma, baseH),
 					l: currentL,
 					c: adjustedChroma,
 					h: baseH,
+					foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 				};
 			}
 		);
@@ -107,74 +116,51 @@ export class PaletteBuilder {
 		// NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 		// Chroma stops as in make-colors.md
-		const CHROMA_STOPS = [
-			0.005, 0.008, 0.012, 0.018, 0.022, 0.025, 0.022, 0.018, 0.012, 0.008, 0.005,
-		];
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }: { scale: string; l: number }, i: number) => {
-				const c = CHROMA_STOPS[i];
+				const c = NEUTRAL_CHROMA_STOPS[i];
+				const fg = ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5);
 				return {
 					scale: `neutral-${scale}`,
 					color: ColorMath.formatOklch(l, c, baseH),
 					l,
 					c,
 					h: baseH,
+					foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 				};
 			}
 		);
 		return neutralScale;
 	}
 
-	/**
-	 * Build base scale for backgrounds (main bg for light/dark mode)
-	 * See: make-colors.md and make-colors-5.md step 7
-	 */
-	static buildBaseScale(): ColorShade[] {
-		return [
-			{
-				scale: "base-100",
-				color: "oklch(100% 0 360)",
-				l: 100,
-				c: 0,
-				h: 360,
-			},
-			{
-				scale: "base-95",
-				color: "oklch(0.996 0.000 360.000)",
-				l: 98,
-				c: 0.005,
-				h: 303.89,
-			},
-			{
-				scale: "base-10",
-				color: "oklch(15% 0.008 303.89)",
-				l: 15,
-				c: 0.008,
-				h: 303.89,
-			},
-			{
-				scale: "base-0",
-				color: "oklch(0% 0 360)",
-				l: 0,
-				c: 0,
-				h: 360,
-			},
-		];
+	static buildBaseScale(primaryColor: string): ColorShade[] {
+		// Base colors with subtle primary color tint for brand cohesion and lighter scale
+		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+
+		return BASE_SCALE_DEFINITIONS.map((shade) => {
+			const colorObj = { l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH };
+			const fg = ColorMath.getContrastingForegroundColor(colorObj, 4.5);
+			return {
+				scale: shade.scale,
+				color: ColorMath.formatOklch(colorObj.l, colorObj.c, colorObj.h),
+				l: shade.l,
+				c: shade.c,
+				h: colorObj.h,
+				foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
+			};
+		});
 	}
 
 	static buildChartScale(primaryColor: string): ColorShade[] {
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 
-		const hueOffsets = [30, 90, 180, 270, -30];
-		const chartTone = { l: 72, c: 0.18 };
-
-		const chartScale: ColorShade[] = hueOffsets.map((offset, index) => {
-			const newHue = (baseH + offset + 360) % 360;
+		const chartScale: ColorShade[] = CHART_HUE_OFFSETS.map((offset, index) => {
+			const newHue = normalizeHue(baseH + offset);
 
 			const inGamut = clampChroma(
 				{
-					l: chartTone.l / 100,
-					c: chartTone.c,
+					l: CHART_TONE.l / 100,
+					c: CHART_TONE.c,
 					h: newHue,
 					mode: "oklch",
 				},
@@ -185,12 +171,14 @@ export class PaletteBuilder {
 			const finalC = inGamut.c;
 			const finalH = inGamut.h;
 
+			const fg = ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5);
 			return {
 				scale: `chart-${index + 1}`,
 				color: ColorMath.formatOklch(finalL, finalC, finalH),
 				l: finalL,
 				c: finalC,
 				h: finalH,
+				foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 			};
 		});
 
@@ -207,7 +195,7 @@ export class PaletteBuilder {
 			return {
 				name: `Generated Palette`,
 				description: `A complete color system derived from ${primaryColor}`,
-				baseScale: this.buildBaseScale(),
+				baseScale: this.buildBaseScale(primaryColor),
 				tonalScale: this.buildTonalScale(primaryColor),
 				semanticColors: this.buildSemanticColors(primaryColor),
 				neutralScale: this.buildNeutralScale(primaryColor),
@@ -219,23 +207,30 @@ export class PaletteBuilder {
 				name: "Invalid Palette",
 				description: `Failed to generate: ${(error as Error).message}`,
 				baseScale: [
-					{ scale: "base-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-95", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-10", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "base-0", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "base-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "base-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				tonalScale: [
-					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				semanticColors: {
 					success: { color: "", foreground: "" },
@@ -244,24 +239,24 @@ export class PaletteBuilder {
 					info: { color: "", foreground: "" },
 				},
 				neutralScale: [
-					{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "neutral-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "neutral-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				chartScale: [
-					{ scale: "chart-1", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-2", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-3", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-4", color: "", l: 0, c: 0, h: 0 },
-					{ scale: "chart-5", color: "", l: 0, c: 0, h: 0 },
+					{ scale: "chart-1", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-2", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-3", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-4", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "chart-5", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 			};
 		}

@@ -1,25 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card } from "@/features/shared/components/card";
 import { Button } from "@/features/shared/components/button";
-import { Copy, Download } from "lucide-react";
+import { Copy } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/features/shared/components/tabs";
 
 import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
+import { DaisyUIExporter } from "@/features/design-system-export/lib/daisyui-exporter";
+import { TailwindV4Exporter } from "@/features/design-system-export/lib/tailwind-v4-exporter";
 import type { Palette } from "@/features/shared/types/global";
+import { signal } from "@preact/signals-react";
+import { useSignals } from "@preact/signals-react/runtime";
+
+const selectedExporterSignal = signal<"shadcn" | "daisyui" | "tailwindv4">("shadcn");
 
 export interface ExportPanelProps {
-	palette: Palette;
+	palette: Palette | null;
 }
 
 export default function ExportPanel({ palette }: ExportPanelProps) {
-	const [cssSnippet, setCssSnippet] = useState<string>("");
+	useSignals();
+	const selectedExporter = selectedExporterSignal.value;
 
-	// Effect to generate snippet whenever the `palette` prop changes
-	useEffect(() => {
-		if (palette) {
-			const snippet = ShadcnExporter.generateTailwindV4CSS(palette).substring(0, 200) + "...";
-			setCssSnippet(snippet);
-		}
-	}, [palette]);
+	const cssSnippet = (() => {
+		const pal = palette;
+		if (!pal) return "";
+		let snippet = "";
+		if (selectedExporter === "shadcn") snippet = ShadcnExporter.generateTailwindV4CSS(pal);
+		else if (selectedExporter === "daisyui") snippet = DaisyUIExporter.generateDaisyUIThemes(pal);
+		else if (selectedExporter === "tailwindv4")
+			snippet = TailwindV4Exporter.generateTailwindV4CSS(pal);
+		return snippet.substring(0, 200) + "...";
+	})();
 
 	const showCopyFeedback = (buttonElement: HTMLButtonElement, originalHtml: string) => {
 		buttonElement.innerHTML = `
@@ -39,15 +50,13 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 	) => {
 		const buttonElement = event.currentTarget;
 		let contentToCopy = "";
-		if (type === "css") {
-			if (palette) {
-				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
-			}
-		} else if (type === "tailwind-config") {
-			if (palette) {
-				contentToCopy = ShadcnExporter.generateTailwindV4CSS(palette);
-			}
-		}
+		const pal = palette;
+		if (selectedExporter === "shadcn" && pal)
+			contentToCopy = ShadcnExporter.generateTailwindV4CSS(pal);
+		else if (selectedExporter === "daisyui" && pal)
+			contentToCopy = DaisyUIExporter.generateDaisyUIThemes(pal);
+		else if (selectedExporter === "tailwindv4" && pal)
+			contentToCopy = TailwindV4Exporter.generateTailwindV4CSS(pal);
 		if (contentToCopy) {
 			const originalButtonContent = buttonElement.innerHTML;
 			await navigator.clipboard.writeText(contentToCopy);
@@ -59,28 +68,37 @@ export default function ExportPanel({ palette }: ExportPanelProps) {
 		<Card>
 			<div className="space-y-4">
 				<div>
-					<h3 className="text-lg font-semibold">Export to shadcn/ui</h3>
+					<h3 className="text-lg font-semibold">Export Design System</h3>
 					<p className="text-muted-foreground text-sm">
-						Export your generated palettes as shadcn/ui CSS variables
+						Export your generated palettes to different design systems
 					</p>
 				</div>
-				<div className="space-y-3">
-					<div className="space-y-3 rounded-lg border p-4">
-						<div className="flex gap-2">
-							<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
-								<Copy className="mr-2 h-4 w-4" />
-								Copy CSS
-							</Button>
-							<Button size="sm" variant="outline" onClick={(e) => handleCopy("tailwind-config", e)}>
-								<Download className="mr-2 h-4 w-4" />
-								Tailwind Config
-							</Button>
+				<Tabs
+					value={selectedExporter}
+					onValueChange={(v) => {
+						if (v === "shadcn" || v === "daisyui" || v === "tailwindv4")
+							selectedExporterSignal.value = v;
+					}}
+				>
+					<TabsList>
+						<TabsTrigger value="shadcn">shadcn/ui</TabsTrigger>
+						<TabsTrigger value="daisyui">DaisyUI</TabsTrigger>
+						<TabsTrigger value="tailwindv4">Tailwind v4</TabsTrigger>
+					</TabsList>
+					<TabsContent value={selectedExporter} className="mt-2">
+						<div className="space-y-3 rounded-lg border p-4">
+							<div className="flex gap-2">
+								<Button size="sm" variant="outline" onClick={(e) => handleCopy("css", e)}>
+									<Copy className="mr-2 h-4 w-4" />
+									Copy CSS
+								</Button>
+							</div>
+							<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
+								<pre>{cssSnippet}</pre>
+							</div>
 						</div>
-						<div className="bg-muted max-h-48 overflow-y-auto rounded-md p-3 font-mono text-sm">
-							<pre>{cssSnippet}</pre>
-						</div>
-					</div>
-				</div>
+					</TabsContent>
+				</Tabs>
 			</div>
 		</Card>
 	);
