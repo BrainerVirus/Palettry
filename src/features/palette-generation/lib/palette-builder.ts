@@ -28,26 +28,17 @@ export class PaletteBuilder {
 				else if (currentL <= 28) adjustedChroma = 0.14;
 				// Clamp again
 				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+				const fg = ColorMath.getContrastingForegroundColor(
+					{ l: currentL, c: adjustedChroma, h: baseH },
+					4.5
+				);
 				return {
 					scale: `primary-${scale}`,
 					color: ColorMath.formatOklch(currentL, adjustedChroma, baseH),
 					l: currentL,
 					c: adjustedChroma,
 					h: baseH,
-					foreground: ColorMath.formatOklch(
-						ColorMath.getContrastingForegroundColor(
-							{ l: currentL, c: adjustedChroma, h: baseH },
-							4.5
-						).l,
-						ColorMath.getContrastingForegroundColor(
-							{ l: currentL, c: adjustedChroma, h: baseH },
-							4.5
-						).c,
-						ColorMath.getContrastingForegroundColor(
-							{ l: currentL, c: adjustedChroma, h: baseH },
-							4.5
-						).h
-					),
+					foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 				};
 			}
 		);
@@ -127,17 +118,14 @@ export class PaletteBuilder {
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }: { scale: string; l: number }, i: number) => {
 				const c = CHROMA_STOPS[i];
+				const fg = ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5);
 				return {
 					scale: `neutral-${scale}`,
 					color: ColorMath.formatOklch(l, c, baseH),
 					l,
 					c,
 					h: baseH,
-					foreground: ColorMath.formatOklch(
-						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).l,
-						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).c,
-						ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5).h
-					),
+					foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 				};
 			}
 		);
@@ -161,27 +149,18 @@ export class PaletteBuilder {
 			{ scale: "base-950", l: 5, c: 0.001 },
 		];
 
-		return baseColors.map((shade) => ({
-			scale: shade.scale,
-			color: ColorMath.formatOklch(shade.l, shade.c, shade.c === 0 ? 0 : baseH), // Use primary hue for tinted bases
-			l: shade.l,
-			c: shade.c,
-			h: shade.c === 0 ? 0 : baseH,
-			foreground: ColorMath.formatOklch(
-				ColorMath.getContrastingForegroundColor(
-					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
-					4.5 // WCAG AA contrast
-				).l,
-				ColorMath.getContrastingForegroundColor(
-					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
-					4.5
-				).c,
-				ColorMath.getContrastingForegroundColor(
-					{ l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH },
-					4.5
-				).h
-			),
-		}));
+		return baseColors.map((shade) => {
+			const colorObj = { l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH };
+			const fg = ColorMath.getContrastingForegroundColor(colorObj, 4.5);
+			return {
+				scale: shade.scale,
+				color: ColorMath.formatOklch(colorObj.l, colorObj.c, colorObj.h),
+				l: shade.l,
+				c: shade.c,
+				h: colorObj.h,
+				foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
+			};
+		});
 	}
 
 	static buildChartScale(primaryColor: string): ColorShade[] {
@@ -207,17 +186,14 @@ export class PaletteBuilder {
 			const finalC = inGamut.c;
 			const finalH = inGamut.h;
 
+			const fg = ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5);
 			return {
 				scale: `chart-${index + 1}`,
 				color: ColorMath.formatOklch(finalL, finalC, finalH),
 				l: finalL,
 				c: finalC,
 				h: finalH,
-				foreground: ColorMath.formatOklch(
-					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).l,
-					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).c,
-					ColorMath.getContrastingForegroundColor({ l: finalL, c: finalC, h: finalH }, 4.5).h
-				),
+				foreground: ColorMath.formatOklch(fg.l, fg.c, fg.h),
 			};
 		});
 
