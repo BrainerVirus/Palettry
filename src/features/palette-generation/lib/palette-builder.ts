@@ -1,17 +1,15 @@
 import { clampChroma } from "culori";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import type { ColorShade, SemanticColors, Palette } from "@/features/shared/types/global";
-import { SEMANTIC_HUE_CONSTRAINTS } from "@/features/palette-generation/constants/hue-constraints";
+import { SEMANTIC_HUE_CONSTRAINTS } from "@/features/shared/constants/hue-constraints";
 import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
 	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
-} from "@/features/palette-generation/constants/lightness-progression";
-import { NEUTRAL_CHROMA_STOPS } from "@/features/palette-generation/constants/neutral-chroma-stops";
-import { BASE_SCALE_DEFINITIONS } from "@/features/palette-generation/constants/base-scale-definitions";
-import {
-	CHART_HUE_OFFSETS,
-	CHART_TONE,
-} from "@/features/palette-generation/constants/chart-constants";
+} from "@/features/shared/constants/lightness-progression";
+import { NEUTRAL_CHROMA_STOPS } from "@/features/shared/constants/neutral-chroma-stops";
+import { BASE_SCALE_DEFINITIONS } from "@/features/shared/constants/base-scale-definitions";
+import { CHART_HUE_OFFSETS, CHART_TONE } from "@/features/shared/constants/chart-constants";
+import { normalizeHue } from "@/features/shared/lib/utils";
 
 export class PaletteBuilder {
 	static buildTonalScale(primaryColor: string): ColorShade[] {
@@ -157,7 +155,7 @@ export class PaletteBuilder {
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 
 		const chartScale: ColorShade[] = CHART_HUE_OFFSETS.map((offset, index) => {
-			const newHue = (baseH + offset + 360) % 360;
+			const newHue = normalizeHue(baseH + offset);
 
 			const inGamut = clampChroma(
 				{
