@@ -19,7 +19,7 @@ import {
 } from "@/features/shared/constants/color-constraints";
 import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
-import { clamp, normalizeHue } from "@/features/shared/lib/utils";
+import { clamp } from "@/features/shared/lib/utils";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);
@@ -74,8 +74,10 @@ export default function ColorInput() {
 		scheduleLivePrimarySync();
 	};
 	const onHChangeLive = (val: number) => {
-		const normalizedHue = normalizeHue(val);
-		hSignal.value = clamp(normalizedHue, H_MIN, H_MAX);
+		// For hue slider, we want to clamp to 0-360 range without wrapping
+		// Since hue is circular, but for UX we want it to stop at 360
+		const clampedHue = Math.max(H_MIN, Math.min(H_MAX, val));
+		hSignal.value = clampedHue;
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
@@ -85,8 +87,8 @@ export default function ColorInput() {
 	const onCCommit = (val: number) =>
 		pushToSignal(lSignal.value, clamp(val, C_MIN, C_MAX), hSignal.value);
 	const onHCommit = (val: number) => {
-		const normalizedHue = normalizeHue(val);
-		pushToSignal(lSignal.value, cSignal.value, clamp(normalizedHue, H_MIN, H_MAX));
+		const clampedHue = Math.max(H_MIN, Math.min(H_MAX, val));
+		pushToSignal(lSignal.value, cSignal.value, clampedHue);
 	};
 
 	const onRawChange = (s: string) => {
@@ -95,7 +97,7 @@ export default function ColorInput() {
 			const parsed = ColorMath.parseOklch(s.trim());
 			const nextL = clamp(parsed.l, L_MIN, L_MAX);
 			const nextC = clamp(parsed.c, C_MIN, C_MAX);
-			const nextH = clamp(normalizeHue(parsed.h), H_MIN, H_MAX);
+			const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
 			lSignal.value = nextL;
 			cSignal.value = nextC;
 			hSignal.value = nextH;
