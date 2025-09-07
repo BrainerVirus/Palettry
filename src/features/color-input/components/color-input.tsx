@@ -8,43 +8,18 @@ import { Button } from "@/features/shared/components/button";
 import { Input } from "@/features/shared/components/input";
 import { Label } from "@/features/shared/components/label";
 import { Slider } from "@/features/shared/components/slider";
-
-const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-const formatOKLCH = (l: number, c: number, h: number) => ColorMath.formatOklch(l, c, h);
-
-const L_MIN = 0;
-const L_MAX = 100;
-const C_MIN = 0;
-const C_MAX = 0.4; // UI bound; downstream handles gamut
-const H_MIN = 0;
-const H_MAX = 360;
-
-function PresetSwatch({ value, onSelect }: { value: string; onSelect: (v: string) => void }) {
-	const fg = useMemo(() => {
-		try {
-			const p = ColorMath.parseOklch(value);
-			const f = ColorMath.getContrastingForegroundColor(p, 7.0);
-			return formatOKLCH(f.l, f.c, f.h);
-		} catch {
-			return "black";
-		}
-	}, [value]);
-
-	return (
-		<Button
-			type="button"
-			variant="outline"
-			onClick={() => onSelect(value)}
-			title={value}
-			aria-label={`Preset ${value}`}
-			className="hover:ring-ring h-9 min-w-[11rem] justify-center border font-mono text-xs transition-all hover:ring-2"
-			style={{ background: value, color: fg }}
-		>
-			{value}
-		</Button>
-	);
-}
+import PresetSwatch from "@/features/shared/components/preset-swatch";
+import {
+	L_MIN,
+	L_MAX,
+	C_MIN,
+	C_MAX,
+	H_MIN,
+	H_MAX,
+} from "@/features/shared/constants/color-constraints";
+import { PRESETS } from "@/features/color-input/constants/color-presets";
+import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
+import { clamp } from "@/features/shared/lib/utils";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);
@@ -144,25 +119,10 @@ export default function ColorInput() {
 		}
 	};
 
-	const preview = useMemo(() => {
-		try {
-			const color = { l: lSignal.value, c: cSignal.value, h: hSignal.value };
-			const fg = ColorMath.getContrastingForegroundColor(color, 7.0);
-			return {
-				bg: formatOKLCH(lSignal.value, cSignal.value, hSignal.value),
-				fg: formatOKLCH(fg.l, fg.c, fg.h),
-			};
-		} catch {
-			return { bg: "transparent", fg: "currentColor" };
-		}
-	}, [lSignal.value, cSignal.value, hSignal.value]);
-
-	const presets = [
-		"oklch(49.6% 0.272 303.89)",
-		"oklch(55% 0.22 25)",
-		"oklch(60% 0.18 240)",
-		"oklch(72% 0.16 140)",
-	];
+	const preview = useMemo(
+		() => getPreviewColors(lSignal.value, cSignal.value, hSignal.value),
+		[lSignal.value, cSignal.value, hSignal.value]
+	);
 
 	const applyPreset = (s: string) => {
 		try {
@@ -311,7 +271,7 @@ export default function ColorInput() {
 
 				{/* Presets as color swatches */}
 				<div className="flex flex-wrap gap-2">
-					{presets.map((p) => (
+					{PRESETS.map((p) => (
 						<PresetSwatch key={p} value={p} onSelect={applyPreset} />
 					))}
 					<Button
