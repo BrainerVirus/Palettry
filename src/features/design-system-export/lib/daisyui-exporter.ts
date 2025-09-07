@@ -193,8 +193,8 @@ export class DaisyUIExporter {
 		return `@plugin "daisyui/theme" {
   name: "light";
   default: true;
-  prefersdark: true;
-  color-scheme: "dark";
+  prefersdark: false;
+  color-scheme: "light";
 ${lines}
 }`;
 	}
