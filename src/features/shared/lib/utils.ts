@@ -16,3 +16,9 @@ export function $$<T extends Element = Element>(selector: string): NodeListOf<T>
 export function clamp(value: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, value));
 }
+
+export function normalizeHue(hue: number): number {
+	let normalized = hue % 360;
+	if (normalized < 0) normalized += 360;
+	return normalized;
+}
