@@ -547,58 +547,201 @@ Enables seamless integration with existing design systems and frameworks.
 
 ```css
 :root {
-  /* Core system colors */
-  --background: oklch(100% 0 360);
-  --foreground: var(--neutral-900);
-
-  /* Surface colors */
-  --card: var(--neutral-50);
-  --card-foreground: var(--neutral-900);
-  --popover: var(--neutral-50);
-  --popover-foreground: var(--neutral-900);
-
-  /* Primary brand colors */
-  --primary: var(--primary-500);
-  --primary-foreground: var(--primary-50);
-
-  /* Secondary/muted colors */
-  --secondary: var(--neutral-200);
-  --secondary-foreground: var(--neutral-800);
-  --muted: var(--neutral-200);
-  --muted-foreground: var(--neutral-600);
-
-  /* Accent colors */
-  --accent: var(--neutral-200);
-  --accent-foreground: var(--neutral-800);
-
-  /* Semantic colors */
-  --destructive: var(--error);
-  --destructive-foreground: var(--error-foreground);
-
-  /* UI elements */
-  --border: var(--neutral-300);
-  --input: var(--neutral-300);
-  --ring: var(--primary-500);
-
-  /* Radius */
-  --radius: 0.5rem;
+  --radius: 0.65rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.15 0.008 303.89);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.008 303.89);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.008 303.89);
+  --primary: oklch(0.42 0.242 303.89);
+  --primary-foreground: oklch(0.98 0.005 303.89);
+  --secondary: oklch(0.95 0.008 303.89);
+  --secondary-foreground: oklch(0.22 0.012 303.89);
+  --muted: oklch(0.95 0.008 303.89);
+  --muted-foreground: oklch(0.65 0.022 303.89);
+  --accent: oklch(0.95 0.008 303.89);
+  --accent-foreground: oklch(0.22 0.012 303.89);
+  --destructive: oklch(0.5 0.203 25);
+  --border: oklch(0.88 0.012 303.89);
+  --input: oklch(0.88 0.012 303.89);
+  --ring: oklch(0.42 0.242 303.89);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.15 0.008 303.89);
+  --sidebar-primary: oklch(0.42 0.242 303.89);
+  --sidebar-primary-foreground: oklch(0.98 0.005 303.89);
+  --sidebar-accent: oklch(0.95 0.008 303.89);
+  --sidebar-accent-foreground: oklch(0.22 0.012 303.89);
+  --sidebar-border: oklch(0.88 0.012 303.89);
+  --sidebar-ring: oklch(0.42 0.242 303.89);
+  --chart-1: oklch(0.72 0.18 333.89);
+  --chart-2: oklch(0.72 0.176 33.89);
+  --chart-3: oklch(0.72 0.179 123.89);
+  --chart-4: oklch(0.72 0.126 213.89);
+  --chart-5: oklch(0.72 0.146 273.89);
 }
 
-/* Dark mode variants */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--neutral-950);
-    --foreground: var(--neutral-50);
-    --card: var(--neutral-900);
-    --card-foreground: var(--neutral-50);
-    --secondary: var(--neutral-800);
-    --secondary-foreground: var(--neutral-200);
-    --muted: var(--neutral-800);
-    --muted-foreground: var(--neutral-400);
-    --accent: var(--neutral-800);
-    --accent-foreground: var(--neutral-200);
-    --border: var(--neutral-700);
-    --input: var(--neutral-700);
+.dark {
+  --background: oklch(0.15 0.008 303.89);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.22 0.012 303.89);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.22 0.012 303.89);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.496 0.272 303.89);
+  --primary-foreground: oklch(0.7 0.12 303.89);
+  --secondary: oklch(0.32 0.018 303.89);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.32 0.018 303.89);
+  --muted-foreground: oklch(0.65 0.022 303.89);
+  --accent: oklch(0.32 0.018 303.89);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.5 0.203 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.12 303.89);
+  --chart-1: oklch(0.72 0.18 333.89);
+  --chart-2: oklch(0.72 0.176 33.89);
+  --chart-3: oklch(0.72 0.179 123.89);
+  --chart-4: oklch(0.72 0.126 213.89);
+  --chart-5: oklch(0.72 0.146 273.89);
+  --sidebar: oklch(0.22 0.012 303.89);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.496 0.272 303.89);
+  --sidebar-primary-foreground: oklch(0.7 0.12 303.89);
+  --sidebar-accent: oklch(0.32 0.018 303.89);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.12 303.89);
+}
+```
+
+### Tailwind v4 Theme Structure
+
+```css
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--color-base-100);
+  --color-foreground: var(--color-base-900-foreground);
+  --color-card: var(--color-base-200);
+  --color-card-foreground: var(--color-base-900-foreground);
+  --color-popover: var(--color-base-200);
+  --color-popover-foreground: var(--color-base-900-foreground);
+  --color-primary: var(--color-primary-500);
+  --color-primary-foreground: var(--color-primary-500-foreground);
+  --color-secondary: var(--color-neutral-200);
+  --color-secondary-foreground: var(--color-neutral-50-foreground);
+  --color-muted: var(--color-base-300);
+  --color-muted-foreground: var(--color-base-900-foreground);
+  --color-accent: var(--color-primary-300);
+  --color-accent-foreground: var(--color-primary-900-foreground);
+  --color-destructive: var(--color-error);
+  --color-border: var(--color-base-400);
+  --color-input: var(--color-base-200);
+  --color-ring: var(--color-primary-400);
+  --color-chart-1: var(--color-chart-1);
+  --color-chart-2: var(--color-chart-2);
+  --color-chart-3: var(--color-chart-3);
+  --color-chart-4: var(--color-chart-4);
+  --color-chart-5: var(--color-chart-5);
+}
+
+:root {
+  --color-base-50: oklch(1 0 0);
+  --color-base-50-foreground: oklch(0.15 0.02 0);
+  --color-base-100: oklch(0.99 0.001 174.9);
+  --color-base-100-foreground: oklch(0.15 0.02 174.9);
+  --color-base-200: oklch(0.98 0.002 174.9);
+  --color-base-200-foreground: oklch(0.15 0.02 174.9);
+  --color-base-300: oklch(0.97 0.004 174.9);
+  --color-base-300-foreground: oklch(0.15 0.02 174.9);
+  --color-base-400: oklch(0.94 0.006 174.9);
+  --color-base-400-foreground: oklch(0.15 0.02 174.9);
+  --color-base-500: oklch(0.5 0 0);
+  --color-base-500-foreground: oklch(0.98 0.01 0);
+  --color-base-600: oklch(0.4 0.005 174.9);
+  --color-base-600-foreground: oklch(0.98 0.01 174.9);
+  --color-base-700: oklch(0.3 0.004 174.9);
+  --color-base-700-foreground: oklch(0.98 0.01 174.9);
+  --color-base-800: oklch(0.2 0.003 174.9);
+  --color-base-800-foreground: oklch(0.98 0.01 174.9);
+  --color-base-900: oklch(0.1 0.002 174.9);
+  --color-base-900-foreground: oklch(0.98 0.01 174.9);
+  --color-base-950: oklch(0.05 0.001 174.9);
+  --color-base-950-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-50: oklch(0.978 0.05 174.9);
+  --color-primary-50-foreground: oklch(0.15 0.02 174.9);
+  --color-primary-100: oklch(0.928 0.05 174.9);
+  --color-primary-100-foreground: oklch(0.15 0.02 174.9);
+  --color-primary-200: oklch(0.828 0.08 174.9);
+  --color-primary-200-foreground: oklch(0.15 0.02 174.9);
+  --color-primary-300: oklch(0.728 0.12 174.9);
+  --color-primary-300-foreground: oklch(0.15 0.02 174.9);
+  --color-primary-400: oklch(0.628 0.2 174.9);
+  --color-primary-400-foreground: oklch(0.15 0.02 174.9);
+  --color-primary-500: oklch(0.524 0.272 174.9);
+  --color-primary-500-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-600: oklch(0.448 0.244 174.9);
+  --color-primary-600-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-700: oklch(0.378 0.216 174.9);
+  --color-primary-700-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-800: oklch(0.308 0.188 174.9);
+  --color-primary-800-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-900: oklch(0.228 0.14 174.9);
+  --color-primary-900-foreground: oklch(0.98 0.01 174.9);
+  --color-primary-950: oklch(0.148 0.08 174.9);
+  --color-primary-950-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-50: oklch(0.98 0.005 174.9);
+  --color-neutral-50-foreground: oklch(0.15 0.02 174.9);
+  --color-neutral-100: oklch(0.95 0.008 174.9);
+  --color-neutral-100-foreground: oklch(0.15 0.02 174.9);
+  --color-neutral-200: oklch(0.88 0.012 174.9);
+  --color-neutral-200-foreground: oklch(0.15 0.02 174.9);
+  --color-neutral-300: oklch(0.78 0.018 174.9);
+  --color-neutral-300-foreground: oklch(0.15 0.02 174.9);
+  --color-neutral-400: oklch(0.65 0.022 174.9);
+  --color-neutral-400-foreground: oklch(0.15 0.02 174.9);
+  --color-neutral-500: oklch(0.52 0.025 174.9);
+  --color-neutral-500-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-600: oklch(0.42 0.022 174.9);
+  --color-neutral-600-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-700: oklch(0.32 0.018 174.9);
+  --color-neutral-700-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-800: oklch(0.22 0.012 174.9);
+  --color-neutral-800-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-900: oklch(0.15 0.008 174.9);
+  --color-neutral-900-foreground: oklch(0.98 0.01 174.9);
+  --color-neutral-950: oklch(0.08 0.005 174.9);
+  --color-neutral-950-foreground: oklch(0.98 0.01 174.9);
+  --color-success: oklch(0.45 0.145 140);
+  --color-success-foreground: oklch(0.98 0.01 140);
+  --color-warning: oklch(0.65 0.141 70);
+  --color-warning-foreground: oklch(0.15 0.02 70);
+  --color-error: oklch(0.525 0.213 25);
+  --color-error-foreground: oklch(0.98 0.01 25);
+  --color-info: oklch(0.45 0.103 240);
+  --color-info-foreground: oklch(0.98 0.01 240);
+  --color-chart-1: oklch(0.72 0.123 204.9);
+  --color-chart-1-foreground: oklch(0.15 0.02 204.9);
+  --color-chart-2: oklch(0.72 0.145 264.9);
+  --color-chart-2-foreground: oklch(0.15 0.02 264.9);
+  --color-chart-3: oklch(0.72 0.18 354.9);
+  --color-chart-3-foreground: oklch(0.15 0.02 354.9);
+  --color-chart-4: oklch(0.72 0.148 84.9);
+  --color-chart-4-foreground: oklch(0.15 0.02 84.9);
+  --color-chart-5: oklch(0.72 0.18 144.9);
+  --color-chart-5-foreground: oklch(0.15 0.02 144.9);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 ```
@@ -606,39 +749,76 @@ Enables seamless integration with existing design systems and frameworks.
 ### For DaisyUI Structure
 
 ```css
-:root {
-  --primary: var(--primary-500);
-  --primary-focus: var(--primary-hover);
-  --primary-content: var(--primary-foreground);
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-50: oklch(1 0 0);
+  --color-base-100: oklch(0.99 0.001 174.9);
+  --color-base-200: oklch(0.98 0.002 174.9);
+  --color-base-300: oklch(0.97 0.004 174.9);
+  --color-base-content: oklch(0.98 0.01 174.9);
+  --color-primary: oklch(0.524 0.272 174.9);
+  --color-primary-content: oklch(0.98 0.01 174.9);
+  --color-secondary: oklch(0.88 0.012 174.9);
+  --color-secondary-content: oklch(0.98 0.005 174.9);
+  --color-accent: oklch(0.728 0.12 174.9);
+  --color-accent-content: oklch(0.228 0.14 174.9);
+  --color-neutral: oklch(0.52 0.025 174.9);
+  --color-neutral-content: oklch(0.98 0.005 174.9);
+  --color-info: oklch(0.45 0.103 240);
+  --color-info-content: oklch(0.98 0.01 240);
+  --color-success: oklch(0.45 0.145 140);
+  --color-success-content: oklch(0.98 0.01 140);
+  --color-warning: oklch(0.65 0.141 70);
+  --color-warning-content: oklch(0.15 0.02 70);
+  --color-error: oklch(0.525 0.213 25);
+  --color-error-content: oklch(0.98 0.01 25);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
 
-  --secondary: var(--info);
-  --secondary-focus: var(--info-hover);
-  --secondary-content: var(--info-foreground);
-
-  --accent: oklch(65% 0.18 50);
-  --accent-focus: oklch(57.4% 0.17 50);
-  --accent-content: oklch(25% 0.08 50);
-
-  --neutral: var(--neutral-500);
-  --neutral-focus: var(--neutral-600);
-  --neutral-content: var(--neutral-50);
-
-  --base-100: var(--neutral-50);
-  --base-200: var(--neutral-100);
-  --base-300: var(--neutral-200);
-  --base-content: var(--neutral-900);
-
-  --info: var(--info);
-  --info-content: var(--info-foreground);
-
-  --success: var(--success);
-  --success-content: var(--success-foreground);
-
-  --warning: var(--warning);
-  --warning-content: var(--warning-foreground);
-
-  --error: var(--error);
-  --error-content: var(--error-foreground);
+@plugin "daisyui/theme" {
+  name: "dark";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-50: oklch(1 0 0);
+  --color-base-100: oklch(0.1 0.002 174.9);
+  --color-base-200: oklch(0.2 0.003 174.9);
+  --color-base-300: oklch(0.3 0.004 174.9);
+  --color-base-content: oklch(0.15 0.02 174.9);
+  --color-primary: oklch(0.524 0.272 174.9);
+  --color-primary-content: oklch(0.98 0.01 174.9);
+  --color-secondary: oklch(0.42 0.022 174.9);
+  --color-secondary-content: oklch(0.95 0.008 174.9);
+  --color-accent: oklch(0.728 0.12 174.9);
+  --color-accent-content: oklch(0.228 0.14 174.9);
+  --color-neutral: oklch(0.52 0.025 174.9);
+  --color-neutral-content: oklch(0.98 0.005 174.9);
+  --color-info: oklch(0.45 0.103 240);
+  --color-info-content: oklch(0.98 0.01 240);
+  --color-success: oklch(0.45 0.145 140);
+  --color-success-content: oklch(0.98 0.01 140);
+  --color-warning: oklch(0.65 0.141 70);
+  --color-warning-content: oklch(0.15 0.02 70);
+  --color-error: oklch(0.525 0.213 25);
+  --color-error-content: oklch(0.98 0.01 25);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
 }
 ```
 
@@ -648,9 +828,86 @@ Enables seamless integration with existing design systems and frameworks.
 - **Light/Dark Modes:** Provide complete variants
 - **Extensibility:** Support for additional system variables
 
----
+## Implementation Details
 
-## Complete Workflow Summary
+### Exporter Classes
+
+The color palette generator includes three specialized exporters:
+
+#### ShadcnExporter
+
+- **Location:** `src/features/design-system-export/lib/shadcn-exporter.ts`
+- **Purpose:** Generates CSS variables compatible with shadcn/ui components
+- **Features:**
+  - Light and dark mode variants
+  - Sidebar color support
+  - Chart color generation
+  - Tailwind v4 theme mapping
+
+#### DaisyUIExporter
+
+- **Location:** `src/features/design-system-export/lib/daisyui-exporter.ts`
+- **Purpose:** Creates DaisyUI theme definitions
+- **Features:**
+  - Separate light and dark theme plugins
+  - Complete semantic color mapping
+  - DaisyUI-specific variable naming
+
+#### TailwindV4Exporter
+
+- **Location:** `src/features/design-system-export/lib/tailwind-v4-exporter.ts`
+- **Purpose:** Generates comprehensive Tailwind v4 theme configuration
+- **Features:**
+  - Inline theme definition
+  - All color scales with foreground variants
+  - Base layer styling
+
+### Usage Example
+
+```typescript
+import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
+import { DaisyUIExporter } from "@/features/design-system-export/lib/daisyui-exporter";
+import { TailwindV4Exporter } from "@/features/design-system-export/lib/tailwind-v4-exporter";
+
+// Generate palette (from your palette generation logic)
+const palette = generatePalette(baseColor);
+
+// Export to different formats
+const shadcnCSS = ShadcnExporter.generateTailwindV4CSS(palette);
+const daisyUIThemes = DaisyUIExporter.generateDaisyUIThemes(palette);
+const tailwindV4CSS = TailwindV4Exporter.generateTailwindV4CSS(palette);
+```
+
+### Integration Steps
+
+1. **Generate your palette** using the OKLCH methodology described above
+2. **Choose your target system** (shadcn/ui, DaisyUI, or Tailwind v4)
+3. **Use the appropriate exporter** to generate CSS variables
+4. **Apply the generated CSS** to your project
+5. **Test accessibility** and visual consistency across light/dark modes
+
+### Common Issues & Solutions
+
+- **Foreground colors not contrasting:** Ensure all foreground colors meet WCAG AA standards
+- **Missing semantic colors:** Verify your palette generation includes all required semantic colors
+- **Chart colors too similar:** The chart color generation uses hue offsets to ensure distinct colors
+- **Base colors not working:** Make sure your base scale includes both light and dark variants
+- **Invalid OKLCH values:** Check that your primary color is a valid OKLCH string format
+- **Build errors:** Ensure all dependencies are installed and TypeScript types are correct
+
+### Testing Your Implementation
+
+1. **Visual Testing:** Check colors in both light and dark modes
+2. **Accessibility Testing:** Use tools like WAVE or axe to verify contrast ratios
+3. **Cross-browser Testing:** Test in multiple browsers for color consistency
+4. **Performance Testing:** Ensure CSS variables don't impact rendering performance
+
+### Advanced Customization
+
+- **Custom Hue Constraints:** Modify `SEMANTIC_HUE_CONSTRAINTS` for brand-specific colors
+- **Lightness Progression:** Adjust `PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP` for different scales
+- **Chroma Adjustments:** Fine-tune chroma formulas for specific use cases
+- **Foreground Calculation:** Customize contrast ratio requirements (default: 4.5:1)
 
 1. **Analyze base color** → Extract L/C/H + calculate personality metrics
 2. **Generate tonal scale** → Mathematical lightness progression + chroma adjustment formula
