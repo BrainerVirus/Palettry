@@ -6,6 +6,12 @@ import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
 	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
 } from "@/features/palette-generation/constants/lightness-progression";
+import { NEUTRAL_CHROMA_STOPS } from "@/features/palette-generation/constants/neutral-chroma-stops";
+import { BASE_SCALE_DEFINITIONS } from "@/features/palette-generation/constants/base-scale-definitions";
+import {
+	CHART_HUE_OFFSETS,
+	CHART_TONE,
+} from "@/features/palette-generation/constants/chart-constants";
 
 export class PaletteBuilder {
 	static buildTonalScale(primaryColor: string): ColorShade[] {
@@ -112,12 +118,9 @@ export class PaletteBuilder {
 		// NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 		// Chroma stops as in make-colors.md
-		const CHROMA_STOPS = [
-			0.005, 0.008, 0.012, 0.018, 0.022, 0.025, 0.022, 0.018, 0.012, 0.008, 0.005,
-		];
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }: { scale: string; l: number }, i: number) => {
-				const c = CHROMA_STOPS[i];
+				const c = NEUTRAL_CHROMA_STOPS[i];
 				const fg = ColorMath.getContrastingForegroundColor({ l, c, h: baseH }, 4.5);
 				return {
 					scale: `neutral-${scale}`,
@@ -135,21 +138,8 @@ export class PaletteBuilder {
 	static buildBaseScale(primaryColor: string): ColorShade[] {
 		// Base colors with subtle primary color tint for brand cohesion and lighter scale
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
-		const baseColors = [
-			{ scale: "base-50", l: 100, c: 0 }, // Pure white
-			{ scale: "base-100", l: 99, c: 0.001 }, // Near white slight tint
-			{ scale: "base-200", l: 98, c: 0.002 },
-			{ scale: "base-300", l: 97, c: 0.004 },
-			{ scale: "base-400", l: 94, c: 0.006 },
-			{ scale: "base-500", l: 50, c: 0 }, // mid neutral
-			{ scale: "base-600", l: 40, c: 0.005 },
-			{ scale: "base-700", l: 30, c: 0.004 },
-			{ scale: "base-800", l: 20, c: 0.003 },
-			{ scale: "base-900", l: 10, c: 0.002 },
-			{ scale: "base-950", l: 5, c: 0.001 },
-		];
 
-		return baseColors.map((shade) => {
+		return BASE_SCALE_DEFINITIONS.map((shade) => {
 			const colorObj = { l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH };
 			const fg = ColorMath.getContrastingForegroundColor(colorObj, 4.5);
 			return {
@@ -166,16 +156,13 @@ export class PaletteBuilder {
 	static buildChartScale(primaryColor: string): ColorShade[] {
 		const { h: baseH } = ColorMath.parseOklch(primaryColor);
 
-		const hueOffsets = [30, 90, 180, 270, -30];
-		const chartTone = { l: 72, c: 0.18 };
-
-		const chartScale: ColorShade[] = hueOffsets.map((offset, index) => {
+		const chartScale: ColorShade[] = CHART_HUE_OFFSETS.map((offset, index) => {
 			const newHue = (baseH + offset + 360) % 360;
 
 			const inGamut = clampChroma(
 				{
-					l: chartTone.l / 100,
-					c: chartTone.c,
+					l: CHART_TONE.l / 100,
+					c: CHART_TONE.c,
 					h: newHue,
 					mode: "oklch",
 				},
