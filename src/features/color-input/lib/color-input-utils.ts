@@ -18,3 +18,27 @@ export const getPreviewColors = (l: number, c: number, h: number) => {
 };
 
 export { normalizeHue };
+
+// Generate OKLCH gradient for Hue slider (0-360°, fixed L and C)
+export function generateHueGradient(currentL: number, currentC: number): string {
+	const stops = [];
+	for (let h = 0; h <= 360; h += 36) {
+		// 10 stops for smoothness
+		stops.push(`oklch(${currentL}% ${currentC} ${h})`);
+	}
+	return `linear-gradient(to right, ${stops.join(", ")})`;
+}
+
+// Generate OKLCH gradient for Lightness slider (0-100%, fixed C and H)
+export function generateLightnessGradient(currentC: number, currentH: number): string {
+	return `linear-gradient(to right, oklch(0% ${currentC} ${currentH}), oklch(100% ${currentC} ${currentH}))`;
+}
+
+// Generate OKLCH gradient for Chroma slider (0-max, fixed L and H)
+export function generateChromaGradient(
+	currentL: number,
+	currentH: number,
+	maxC: number = 0.4
+): string {
+	return `linear-gradient(to right, oklch(${currentL}% 0 ${currentH}), oklch(${currentL}% ${maxC} ${currentH}))`;
+}
