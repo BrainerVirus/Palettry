@@ -1,7 +1,7 @@
-import React, { useMemo, useRef, useCallback } from "react";
+import React, { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { primaryColor, setPrimaryColor } from "@/features/palette-generation/store/palette-store";
-import { signal } from "@preact/signals-react";
+import { effect, signal } from "@preact/signals-react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Card } from "@/features/shared/components/card";
 // import { Button } from "@/features/shared/components/button";
@@ -20,7 +20,6 @@ import {
 // import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
 import { clamp } from "@/features/shared/lib/utils";
-import { useDebounceCallback } from "@/features/shared/hooks";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);
@@ -31,25 +30,27 @@ const errorSignal = signal<string | null>(null);
 export default function ColorInput() {
 	useSignals();
 
-	// Debounced validation function
-	const validateAndUpdate = useCallback((input: string) => {
-		try {
-			const parsed = ColorMath.parseOklch(input.trim());
-			const nextL = clamp(parsed.l, L_MIN, L_MAX);
-			const nextC = clamp(parsed.c, C_MIN, C_MAX);
-			const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
-			lSignal.value = nextL;
-			cSignal.value = nextC;
-			hSignal.value = nextH;
-			errorSignal.value = null;
-			pushToSignal(nextL, nextC, nextH);
-		} catch {
-			errorSignal.value = "Expected: oklch(60% 0.18 240)";
-		}
-	}, []);
+	// Debounced validation using effect
+	effect(() => {
+		const input = rawSignal.value;
+		const timeoutId = setTimeout(() => {
+			try {
+				const parsed = ColorMath.parseOklch(input.trim());
+				const nextL = clamp(parsed.l, L_MIN, L_MAX);
+				const nextC = clamp(parsed.c, C_MIN, C_MAX);
+				const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
+				lSignal.value = nextL;
+				cSignal.value = nextC;
+				hSignal.value = nextH;
+				errorSignal.value = null;
+				pushToSignal(nextL, nextC, nextH);
+			} catch {
+				errorSignal.value = "Expected: oklch(60% 0.18 240)";
+			}
+		}, 500);
 
-	// Debounced version of the validation function
-	const debouncedValidate = useDebounceCallback(validateAndUpdate, 500);
+		return () => clearTimeout(timeoutId);
+	});
 
 	// One-time initialization from current primaryColor
 	const initRef = useRef(false);
@@ -89,11 +90,13 @@ export default function ColorInput() {
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	const onCChangeLive = (val: number) => {
 		cSignal.value = clamp(val, C_MIN, C_MAX);
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	const onHChangeLive = (val: number) => {
 		// For hue slider, we want to clamp to 0-360 range without wrapping
 		// Since hue is circular, but for UX we want it to stop at 360
@@ -102,6 +105,7 @@ export default function ColorInput() {
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	// Commit handlers ensure final exact value applied immediately
 	const onLCommit = (val: number) =>
 		pushToSignal(clamp(val, L_MIN, L_MAX), cSignal.value, hSignal.value);
@@ -112,13 +116,9 @@ export default function ColorInput() {
 		pushToSignal(lSignal.value, cSignal.value, clampedHue);
 	};
 
-	const onRawChange = useCallback(
-		(s: string) => {
-			rawSignal.value = s;
-			debouncedValidate(s);
-		},
-		[debouncedValidate]
-	);
+	const onRawChange = (s: string) => {
+		rawSignal.value = s;
+	};
 
 	const onRawBlur = () => {
 		try {
