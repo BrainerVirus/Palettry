@@ -15,7 +15,7 @@ export class ShadcnExporter {
 
 	private static light(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors, chartScale } = method;
-		const primary = tonalScale.find((s) => s.scale === "primary-600")?.color || tonalScale[6].color;
+		const primary = tonalScale.find((s) => s.scale === "brand-600")?.color || tonalScale[6].color;
 		const primaryFg = neutralScale.find((s) => s.scale === "neutral-50")?.color || "oklch(1 0 0)";
 		const chartVars: CssVars = {};
 		chartScale.forEach((c, i) => {
@@ -58,8 +58,8 @@ export class ShadcnExporter {
 
 	private static dark(method: Palette): CssVars {
 		const { tonalScale, semanticColors, chartScale } = method;
-		const primary = tonalScale.find((s) => s.scale === "primary-500")?.color || tonalScale[5].color;
-		const primaryFg = tonalScale.find((s) => s.scale === "primary-300")?.color || primary;
+		const primary = tonalScale.find((s) => s.scale === "brand-500")?.color || tonalScale[5].color;
+		const primaryFg = tonalScale.find((s) => s.scale === "brand-300")?.color || primary;
 		const chartVars: CssVars = {};
 		chartScale.forEach((c, i) => {
 			chartVars[`--chart-${i + 1}`] = normalizeFull(c.color, c.color);
