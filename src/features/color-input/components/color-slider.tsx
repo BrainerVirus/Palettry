@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
 	generateHueGradient,
 	generateLightnessGradient,
@@ -58,29 +58,6 @@ export function ColorSlider({
 	}, [type, currentL, currentC, currentH]);
 
 	// Handle mouse/touch events
-	const handleStart = useCallback(
-		(clientX: number) => {
-			if (!sliderRef.current) return;
-			setIsDragging(true);
-			updateValue(clientX);
-		},
-		[min, max, step, onValueChange]
-	);
-
-	const handleMove = useCallback(
-		(clientX: number) => {
-			if (!isDragging || !sliderRef.current) return;
-			updateValue(clientX);
-		},
-		[isDragging, min, max, step, onValueChange]
-	);
-
-	const handleEnd = useCallback(() => {
-		if (!isDragging) return;
-		setIsDragging(false);
-		onValueCommit([value]);
-	}, [isDragging, value, onValueCommit]);
-
 	const updateValue = useCallback(
 		(clientX: number) => {
 			if (!sliderRef.current) return;
@@ -102,44 +79,38 @@ export function ColorSlider({
 		[min, max, step, onValueChange]
 	);
 
-	// Mouse events
-	const handleMouseDown = (e: React.MouseEvent) => {
+	// Pointer events for better React compatibility
+	const handlePointerDown = useCallback((e: React.PointerEvent) => {
 		e.preventDefault();
-		handleStart(e.clientX);
-	};
+		if (!sliderRef.current) return;
 
-	// Touch events
-	const handleTouchStart = (e: React.TouchEvent) => {
-		e.preventDefault();
-		const touch = e.touches[0];
-		handleStart(touch.clientX);
-	};
+		// Set pointer capture for better drag handling
+		(e.target as Element).setPointerCapture(e.pointerId);
+		setIsDragging(true);
+		updateValue(e.clientX);
+	}, []);
 
-	// Global mouse/touch move and up handlers
-	useEffect(() => {
-		const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
-		const handleTouchMove = (e: TouchEvent) => {
-			const touch = e.touches[0];
-			handleMove(touch.clientX);
-		};
+	const handlePointerMove = useCallback(
+		(e: React.PointerEvent) => {
+			if (!isDragging) return;
+			e.preventDefault();
+			updateValue(e.clientX);
+		},
+		[isDragging]
+	);
 
-		const handleMouseUp = () => handleEnd();
-		const handleTouchEnd = () => handleEnd();
+	const handlePointerUp = useCallback(
+		(e: React.PointerEvent) => {
+			if (!isDragging) return;
+			e.preventDefault();
 
-		if (isDragging) {
-			document.addEventListener("mousemove", handleMouseMove);
-			document.addEventListener("mouseup", handleMouseUp);
-			document.addEventListener("touchmove", handleTouchMove, { passive: false });
-			document.addEventListener("touchend", handleTouchEnd);
-		}
-
-		return () => {
-			document.removeEventListener("mousemove", handleMouseMove);
-			document.removeEventListener("mouseup", handleMouseUp);
-			document.removeEventListener("touchmove", handleTouchMove);
-			document.removeEventListener("touchend", handleTouchEnd);
-		};
-	}, [isDragging, handleMove, handleEnd]);
+			// Release pointer capture
+			(e.target as Element).releasePointerCapture(e.pointerId);
+			setIsDragging(false);
+			onValueCommit([value]);
+		},
+		[isDragging, value, onValueCommit]
+	);
 
 	return (
 		<div
@@ -154,8 +125,9 @@ export function ColorSlider({
 			style={{
 				background: gradient,
 			}}
-			onMouseDown={handleMouseDown}
-			onTouchStart={handleTouchStart}
+			onPointerDown={handlePointerDown}
+			onPointerMove={handlePointerMove}
+			onPointerUp={handlePointerUp}
 			data-dragging={isDragging ? "true" : "false"}
 			role="slider"
 			aria-label={ariaLabel}
