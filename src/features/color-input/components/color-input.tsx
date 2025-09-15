@@ -1,14 +1,14 @@
-import React, { useMemo, useRef, useCallback } from "react";
+import React, { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { primaryColor, setPrimaryColor } from "@/features/palette-generation/store/palette-store";
-import { signal } from "@preact/signals-react";
+import { effect, signal } from "@preact/signals-react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Card } from "@/features/shared/components/card";
-import { Button } from "@/features/shared/components/button";
+// import { Button } from "@/features/shared/components/button";
 import { Input } from "@/features/shared/components/input";
 import { Label } from "@/features/shared/components/label";
-import { Slider } from "@/features/shared/components/slider";
-import PresetSwatch from "@/features/shared/components/preset-swatch";
+import { ColorSlider } from "./color-slider";
+// import PresetSwatch from "@/features/shared/components/preset-swatch";
 import {
 	L_MIN,
 	L_MAX,
@@ -17,10 +17,9 @@ import {
 	H_MIN,
 	H_MAX,
 } from "@/features/shared/constants/color-constraints";
-import { PRESETS } from "@/features/color-input/constants/color-presets";
+// import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
 import { clamp } from "@/features/shared/lib/utils";
-import { useDebounceCallback } from "@/features/shared/hooks";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);
@@ -31,25 +30,27 @@ const errorSignal = signal<string | null>(null);
 export default function ColorInput() {
 	useSignals();
 
-	// Debounced validation function
-	const validateAndUpdate = useCallback((input: string) => {
-		try {
-			const parsed = ColorMath.parseOklch(input.trim());
-			const nextL = clamp(parsed.l, L_MIN, L_MAX);
-			const nextC = clamp(parsed.c, C_MIN, C_MAX);
-			const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
-			lSignal.value = nextL;
-			cSignal.value = nextC;
-			hSignal.value = nextH;
-			errorSignal.value = null;
-			pushToSignal(nextL, nextC, nextH);
-		} catch {
-			errorSignal.value = "Expected: oklch(60% 0.18 240)";
-		}
-	}, []);
+	// Debounced validation using effect
+	effect(() => {
+		const input = rawSignal.value;
+		const timeoutId = setTimeout(() => {
+			try {
+				const parsed = ColorMath.parseOklch(input.trim());
+				const nextL = clamp(parsed.l, L_MIN, L_MAX);
+				const nextC = clamp(parsed.c, C_MIN, C_MAX);
+				const nextH = Math.max(H_MIN, Math.min(H_MAX, parsed.h));
+				lSignal.value = nextL;
+				cSignal.value = nextC;
+				hSignal.value = nextH;
+				errorSignal.value = null;
+				pushToSignal(nextL, nextC, nextH);
+			} catch {
+				errorSignal.value = "Expected: oklch(60% 0.18 240)";
+			}
+		}, 500);
 
-	// Debounced version of the validation function
-	const debouncedValidate = useDebounceCallback(validateAndUpdate, 500);
+		return () => clearTimeout(timeoutId);
+	});
 
 	// One-time initialization from current primaryColor
 	const initRef = useRef(false);
@@ -89,11 +90,13 @@ export default function ColorInput() {
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	const onCChangeLive = (val: number) => {
 		cSignal.value = clamp(val, C_MIN, C_MAX);
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	const onHChangeLive = (val: number) => {
 		// For hue slider, we want to clamp to 0-360 range without wrapping
 		// Since hue is circular, but for UX we want it to stop at 360
@@ -102,6 +105,7 @@ export default function ColorInput() {
 		errorSignal.value = null;
 		scheduleLivePrimarySync();
 	};
+
 	// Commit handlers ensure final exact value applied immediately
 	const onLCommit = (val: number) =>
 		pushToSignal(clamp(val, L_MIN, L_MAX), cSignal.value, hSignal.value);
@@ -112,13 +116,9 @@ export default function ColorInput() {
 		pushToSignal(lSignal.value, cSignal.value, clampedHue);
 	};
 
-	const onRawChange = useCallback(
-		(s: string) => {
-			rawSignal.value = s;
-			debouncedValidate(s);
-		},
-		[debouncedValidate]
-	);
+	const onRawChange = (s: string) => {
+		rawSignal.value = s;
+	};
 
 	const onRawBlur = () => {
 		try {
@@ -136,19 +136,19 @@ export default function ColorInput() {
 		[lSignal.value, cSignal.value, hSignal.value]
 	);
 
-	const applyPreset = (s: string) => {
-		try {
-			const p = ColorMath.parseOklch(s);
-			lSignal.value = p.l;
-			cSignal.value = p.c;
-			hSignal.value = p.h;
-			rawSignal.value = formatOKLCH(p.l, p.c, p.h);
-			errorSignal.value = null;
-			setPrimaryColor(formatOKLCH(p.l, p.c, p.h));
-		} catch {
-			errorSignal.value = "Invalid preset";
-		}
-	};
+	// const applyPreset = (s: string) => {
+	// 	try {
+	// 		const p = ColorMath.parseOklch(s);
+	// 		lSignal.value = p.l;
+	// 		cSignal.value = p.c;
+	// 		hSignal.value = p.h;
+	// 		rawSignal.value = formatOKLCH(p.l, p.c, p.h);
+	// 		errorSignal.value = null;
+	// 		setPrimaryColor(formatOKLCH(p.l, p.c, p.h));
+	// 	} catch {
+	// 		errorSignal.value = "Invalid preset";
+	// 	}
+	// };
 
 	return (
 		<Card>
@@ -192,14 +192,25 @@ export default function ColorInput() {
 				</div>
 
 				{/* Sliders + numeric inputs */}
-				<div className="grid gap-4 md:grid-cols-3">
+				<div className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-4">
 					{/* Lightness */}
 					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<Label htmlFor="l">L (Lightness)</Label>
+						<Label htmlFor="l">L (Lightness)</Label>
+						<div className="grid w-full grid-cols-1 gap-2 md:grid-cols-[minmax(8rem,6fr)_minmax(4rem,1fr)]">
+							<ColorSlider
+								type="lightness"
+								value={lSignal.value}
+								min={L_MIN}
+								max={L_MAX}
+								step={0.1}
+								onValueChange={([v]) => onLChangeLive(v)}
+								onValueCommit={([v]) => onLCommit(v)}
+								currentC={cSignal.value}
+								currentH={hSignal.value}
+								aria-label={`Lightness: ${lSignal.value.toFixed(1)}%`}
+							/>
 							<Input
 								id="l"
-								type="number"
 								min={L_MIN}
 								max={L_MAX}
 								step={0.1}
@@ -209,26 +220,29 @@ export default function ColorInput() {
 									onLChangeLive(v);
 									onLCommit(v);
 								}}
-								className="w-24 text-right"
+								className="w-full text-center"
 							/>
 						</div>
-						<Slider
-							value={[lSignal.value]}
-							min={L_MIN}
-							max={L_MAX}
-							step={0.1}
-							onValueChange={([v]) => onLChangeLive(v)}
-							onValueCommit={([v]) => onLCommit(v)}
-						/>
 					</div>
 
 					{/* Chroma */}
 					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<Label htmlFor="c">C (Chroma)</Label>
+						<Label htmlFor="c">C (Chroma)</Label>
+						<div className="grid w-full grid-cols-1 gap-2 md:grid-cols-[minmax(8rem,6fr)_minmax(4rem,1fr)]">
+							<ColorSlider
+								type="chroma"
+								value={cSignal.value}
+								min={C_MIN}
+								max={C_MAX}
+								step={0.001}
+								onValueChange={([v]) => onCChangeLive(v)}
+								onValueCommit={([v]) => onCCommit(v)}
+								currentL={lSignal.value}
+								currentH={hSignal.value}
+								aria-label={`Chroma: ${cSignal.value.toFixed(3)}`}
+							/>
 							<Input
 								id="c"
-								type="number"
 								min={C_MIN}
 								max={C_MAX}
 								step={0.001}
@@ -238,26 +252,29 @@ export default function ColorInput() {
 									onCChangeLive(v);
 									onCCommit(v);
 								}}
-								className="w-24 text-right"
+								className="w-full text-center"
 							/>
 						</div>
-						<Slider
-							value={[cSignal.value]}
-							min={C_MIN}
-							max={C_MAX}
-							step={0.001}
-							onValueChange={([v]) => onCChangeLive(v)}
-							onValueCommit={([v]) => onCCommit(v)}
-						/>
 					</div>
 
 					{/* Hue */}
 					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<Label htmlFor="h">H (Hue)</Label>
+						<Label htmlFor="h">H (Hue)</Label>
+						<div className="grid w-full grid-cols-1 gap-2 md:grid-cols-[minmax(8rem,6fr)_minmax(4rem,1fr)]">
+							<ColorSlider
+								type="hue"
+								value={hSignal.value}
+								min={H_MIN}
+								max={H_MAX}
+								step={0.1}
+								onValueChange={([v]) => onHChangeLive(v)}
+								onValueCommit={([v]) => onHCommit(v)}
+								currentL={lSignal.value}
+								currentC={cSignal.value}
+								aria-label={`Hue: ${hSignal.value.toFixed(1)}°`}
+							/>
 							<Input
 								id="h"
-								type="number"
 								min={H_MIN}
 								max={H_MAX}
 								step={0.1}
@@ -267,22 +284,14 @@ export default function ColorInput() {
 									onHChangeLive(v);
 									onHCommit(v);
 								}}
-								className="w-24 text-right"
+								className="w-full text-center"
 							/>
 						</div>
-						<Slider
-							value={[hSignal.value]}
-							min={H_MIN}
-							max={H_MAX}
-							step={0.1}
-							onValueChange={([v]) => onHChangeLive(v)}
-							onValueCommit={([v]) => onHCommit(v)}
-						/>
 					</div>
 				</div>
 
 				{/* Presets as color swatches */}
-				<div className="flex flex-wrap gap-2">
+				{/* <div className="flex flex-wrap gap-2">
 					{PRESETS.map((p) => (
 						<PresetSwatch key={p} value={p} onSelect={applyPreset} />
 					))}
@@ -293,7 +302,7 @@ export default function ColorInput() {
 					>
 						Reset
 					</Button>
-				</div>
+				</div> */}
 			</div>
 		</Card>
 	);
