@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
-import { primaryColor, setPrimaryColor } from "@/features/palette-generation/store/palette-store";
+import { brandColor, setBrandColor } from "@/features/palette-generation/store/palette-store";
 import { effect, signal } from "@preact/signals-react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Card } from "@/features/shared/components/card";
@@ -52,11 +52,11 @@ export default function ColorInput() {
 		return () => clearTimeout(timeoutId);
 	});
 
-	// One-time initialization from current primaryColor
+	// One-time initialization from current brandColor
 	const initRef = useRef(false);
 	if (!initRef.current) {
 		try {
-			const parsed = ColorMath.parseOklch(primaryColor.value);
+			const parsed = ColorMath.parseOklch(brandColor.value);
 			lSignal.value = parsed.l;
 			cSignal.value = parsed.c;
 			hSignal.value = parsed.h;
@@ -72,7 +72,7 @@ export default function ColorInput() {
 	const pushToSignal = (nextL: number, nextC: number, nextH: number) => {
 		const formatted = formatOKLCH(nextL, nextC, nextH);
 		rawSignal.value = formatted;
-		setPrimaryColor(formatted);
+		setBrandColor(formatted);
 	};
 
 	// Real-time palette sync while dragging (throttled to rAF)
@@ -155,7 +155,7 @@ export default function ColorInput() {
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
 					<div className="space-y-1">
-						<h3 className="text-lg font-semibold">Primary color</h3>
+						<h3 className="text-lg font-semibold">Brand color</h3>
 						<p className="text-muted-foreground text-sm">
 							Type OKLCH or use the sliders. We’ll keep it valid and in sync.
 						</p>
