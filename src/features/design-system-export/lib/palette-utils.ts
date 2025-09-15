@@ -32,13 +32,13 @@ export const findAndNormalize = (
 };
 
 // Generates a set of 5 distinct and vibrant chart colors.
-export const generateChartColors = (primaryHue: number): { light: CssVars; dark: CssVars } => {
+export const generateChartColors = (brandHue: number): { light: CssVars; dark: CssVars } => {
 	const hues = [
-		normalizeHue(primaryHue + 30),
-		normalizeHue(primaryHue + 90),
-		normalizeHue(primaryHue + 180),
-		normalizeHue(primaryHue + 270),
-		normalizeHue(primaryHue - 30),
+		normalizeHue(brandHue + 30),
+		normalizeHue(brandHue + 90),
+		normalizeHue(brandHue + 180),
+		normalizeHue(brandHue + 270),
+		normalizeHue(brandHue - 30),
 	];
 	const lightModePersonality = { l: 70, c: 0.15 };
 	const darkModePersonality = { l: 75, c: 0.2 };

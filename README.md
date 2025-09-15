@@ -46,8 +46,8 @@ src/
 
 ### 🛠️ How It Works
 
-1. **Input a Primary Color:**  
-   Start with your brand or primary color in OKLCH format.
+1. **Input a Brand Color:**  
+   Start with your brand color in OKLCH format.
 
 2. **Generate Palette:**  
    The app builds a full tonal scale, semantic colors, and neutral variants using color science best practices.

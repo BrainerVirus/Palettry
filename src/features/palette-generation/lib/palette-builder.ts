@@ -12,8 +12,8 @@ import { CHART_HUE_OFFSETS, CHART_TONE } from "@/features/shared/constants/chart
 import { normalizeHue } from "@/features/shared/lib/utils";
 
 export class PaletteBuilder {
-	static buildTonalScale(primaryColor: string): ColorShade[] {
-		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(primaryColor);
+	static buildTonalScale(brandColor: string): ColorShade[] {
+		const { l: baseL, c: baseC, h: baseH } = ColorMath.parseOklch(brandColor);
 		// Use imported progression constant for stops and scales
 		// PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
 		const tonalScale: ColorShade[] = PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
@@ -37,7 +37,7 @@ export class PaletteBuilder {
 					4.5
 				);
 				return {
-					scale: `primary-${scale}`,
+					scale: `brand-${scale}`,
 					color: ColorMath.formatOklch(currentL, adjustedChroma, baseH),
 					l: currentL,
 					c: adjustedChroma,
@@ -49,8 +49,8 @@ export class PaletteBuilder {
 		return tonalScale;
 	}
 
-	static buildSemanticColors(primaryColor: string): SemanticColors {
-		const { l: baseL, c: baseC } = ColorMath.parseOklch(primaryColor);
+	static buildSemanticColors(brandColor: string): SemanticColors {
+		const { l: baseL, c: baseC } = ColorMath.parseOklch(brandColor);
 		const targetWeight = ColorMath.calculateWeight(baseL, baseC);
 		const targetEnergy = ColorMath.calculateEnergy(baseL, baseC);
 
@@ -111,10 +111,10 @@ export class PaletteBuilder {
 		return semanticColors as SemanticColors;
 	}
 
-	static buildNeutralScale(primaryColor: string): ColorShade[] {
+	static buildNeutralScale(brandColor: string): ColorShade[] {
 		// Use imported progression constant for stops and scales
 		// NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP: [{ scale, l }]
-		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+		const { h: baseH } = ColorMath.parseOklch(brandColor);
 		// Chroma stops as in make-colors.md
 		const neutralScale: ColorShade[] = NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP.map(
 			({ scale, l }: { scale: string; l: number }, i: number) => {
@@ -133,9 +133,9 @@ export class PaletteBuilder {
 		return neutralScale;
 	}
 
-	static buildBaseScale(primaryColor: string): ColorShade[] {
-		// Base colors with subtle primary color tint for brand cohesion and lighter scale
-		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+	static buildBaseScale(brandColor: string): ColorShade[] {
+		// Base colors with subtle brand color tint for brand cohesion and consistent theming
+		const { h: baseH } = ColorMath.parseOklch(brandColor);
 
 		return BASE_SCALE_DEFINITIONS.map((shade) => {
 			const colorObj = { l: shade.l, c: shade.c, h: shade.c === 0 ? 0 : baseH };
@@ -151,8 +151,8 @@ export class PaletteBuilder {
 		});
 	}
 
-	static buildChartScale(primaryColor: string): ColorShade[] {
-		const { h: baseH } = ColorMath.parseOklch(primaryColor);
+	static buildChartScale(brandColor: string): ColorShade[] {
+		const { h: baseH } = ColorMath.parseOklch(brandColor);
 
 		const chartScale: ColorShade[] = CHART_HUE_OFFSETS.map((offset, index) => {
 			const newHue = normalizeHue(baseH + offset);
@@ -185,21 +185,21 @@ export class PaletteBuilder {
 		return chartScale;
 	}
 
-	static buildPalette(primaryColor: string): Palette {
+	static buildPalette(brandColor: string): Palette {
 		try {
-			const parsed = ColorMath.parseOklch(primaryColor);
+			const parsed = ColorMath.parseOklch(brandColor);
 			if (!ColorMath.validateOklch(parsed)) {
 				throw new Error("Invalid color values.");
 			}
 
 			return {
 				name: `Generated Palette`,
-				description: `A complete color system derived from ${primaryColor}`,
-				baseScale: this.buildBaseScale(primaryColor),
-				tonalScale: this.buildTonalScale(primaryColor),
-				semanticColors: this.buildSemanticColors(primaryColor),
-				neutralScale: this.buildNeutralScale(primaryColor),
-				chartScale: this.buildChartScale(primaryColor),
+				description: `A complete color system derived from ${brandColor}`,
+				baseScale: this.buildBaseScale(brandColor),
+				tonalScale: this.buildTonalScale(brandColor),
+				semanticColors: this.buildSemanticColors(brandColor),
+				neutralScale: this.buildNeutralScale(brandColor),
+				chartScale: this.buildChartScale(brandColor),
 			};
 		} catch (error) {
 			console.error("Error building palette:", error);
@@ -220,17 +220,17 @@ export class PaletteBuilder {
 					{ scale: "base-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				tonalScale: [
-					{ scale: "primary-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
-					{ scale: "primary-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-50", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-100", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-200", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-300", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-400", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-500", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-600", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-700", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-800", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-900", color: "", l: 0, c: 0, h: 0, foreground: "" },
+					{ scale: "brand-950", color: "", l: 0, c: 0, h: 0, foreground: "" },
 				],
 				semanticColors: {
 					success: { color: "", foreground: "" },
