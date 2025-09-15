@@ -197,8 +197,8 @@ export function ColorSlider({
 			{/* Handle */}
 			<div
 				className={cn(
-					"absolute top-1/2 -mt-6 -ml-2 h-12 w-4 rounded border-2 border-white",
-					"hover:bg-muted border-border border bg-white",
+					"border-border absolute top-1/2 -mt-6 -ml-2 h-12 w-4 rounded border-2",
+					"hover:bg-muted border-border bg-card border",
 					"[transition:left_300ms_ease-out,background-color_150ms_ease-out,transform_150ms_ease-out,box-shadow_150ms_ease-out,scale_150ms_ease-in]",
 					"shadow-lg",
 					"group-data-[dragging=true]:scale-110 group-data-[dragging=true]:shadow-xl"
@@ -209,10 +209,10 @@ export function ColorSlider({
 			>
 				{/* Handle indicator dots */}
 				<div className="absolute top-1/2 left-1/2 -mt-2 -ml-0.25 flex flex-col gap-0.5">
-					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
-					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
-					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
-					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
+					<div className="bg-foreground h-0.5 w-0.5 rounded-full transition-colors duration-300" />
+					<div className="bg-foreground h-0.5 w-0.5 rounded-full transition-colors duration-300" />
+					<div className="bg-foreground h-0.5 w-0.5 rounded-full transition-colors duration-300" />
+					<div className="bg-foreground h-0.5 w-0.5 rounded-full transition-colors duration-300" />
 				</div>
 			</div>
 		</div>
