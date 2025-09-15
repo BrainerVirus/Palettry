@@ -24,7 +24,7 @@ export class TailwindV4Exporter {
 			);
 		});
 
-		// Primary colors
+		// Brand colors
 		palette.tonalScale.forEach((shade) => {
 			const varName = `--color-${shade.scale}`;
 			vars[varName] = normalizeFull(shade.color, "oklch(0.5 0.2 240)");
@@ -71,18 +71,18 @@ export class TailwindV4Exporter {
   --color-card-foreground: var(--color-base-900-foreground);
   --color-popover: var(--color-base-200);
   --color-popover-foreground: var(--color-base-900-foreground);
-  --color-primary: var(--color-primary-500);
-  --color-primary-foreground: var(--color-primary-500-foreground);
+  --color-primary: var(--color-brand-500);
+  --color-primary-foreground: var(--color-brand-500-foreground);
   --color-secondary: var(--color-neutral-200);
   --color-secondary-foreground: var(--color-neutral-50-foreground);
   --color-muted: var(--color-base-300);
   --color-muted-foreground: var(--color-base-900-foreground);
-  --color-accent: var(--color-primary-300);
-  --color-accent-foreground: var(--color-primary-900-foreground);
+  --color-accent: var(--color-brand-300);
+  --color-accent-foreground: var(--color-brand-900-foreground);
   --color-destructive: var(--color-error);
   --color-border: var(--color-base-400);
   --color-input: var(--color-base-200);
-  --color-ring: var(--color-primary-400);
+  --color-ring: var(--color-brand-400);
   --color-chart-1: var(--color-chart-1);
   --color-chart-2: var(--color-chart-2);
   --color-chart-3: var(--color-chart-3);
