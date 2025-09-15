@@ -134,7 +134,7 @@ export class PaletteBuilder {
 	}
 
 	static buildBaseScale(brandColor: string): ColorShade[] {
-		// Base colors with subtle brand color tint for brand cohesion and lighter scale
+		// Base colors with subtle brand color tint for brand cohesion and consistent theming
 		const { h: baseH } = ColorMath.parseOklch(brandColor);
 
 		return BASE_SCALE_DEFINITIONS.map((shade) => {
