@@ -146,8 +146,9 @@ export function ColorSlider({
 			ref={sliderRef}
 			className={cn(
 				"relative h-9 w-full cursor-pointer touch-none select-none",
-				"rounded-md bg-gradient-to-r",
-				isDragging && "cursor-grabbing",
+				"border-border rounded-md border bg-gradient-to-r",
+				"group",
+				'data-[dragging="true"]:cursor-grabbing',
 				className
 			)}
 			style={{
@@ -155,6 +156,7 @@ export function ColorSlider({
 			}}
 			onMouseDown={handleMouseDown}
 			onTouchStart={handleTouchStart}
+			data-dragging={isDragging ? "true" : "false"}
 			role="slider"
 			aria-label={ariaLabel}
 			aria-valuemin={min}
@@ -195,16 +197,23 @@ export function ColorSlider({
 			{/* Handle */}
 			<div
 				className={cn(
-					"absolute top-1/2 -mt-6 -ml-2 h-12 w-4 rounded border-2 border-white shadow-lg",
-					"bg-gray-100 transition-colors hover:bg-gray-200",
-					isDragging && "scale-110 bg-gray-300"
+					"absolute top-1/2 -mt-6 -ml-2 h-12 w-4 rounded border-2 border-white",
+					"hover:bg-muted border-border border bg-white",
+					"[transition:left_300ms_ease-out,background-color_150ms_ease-out,transform_150ms_ease-out,box-shadow_150ms_ease-out,scale_150ms_ease-in]",
+					"shadow-lg",
+					"group-data-[dragging=true]:scale-110 group-data-[dragging=true]:shadow-xl"
 				)}
 				style={{
 					left: `${percentage}%`,
 				}}
 			>
-				{/* Handle indicator line */}
-				<div className="absolute top-1/2 left-1/2 -mt-1 -ml-0.25 h-2 w-0.5 bg-gray-600" />
+				{/* Handle indicator dots */}
+				<div className="absolute top-1/2 left-1/2 -mt-2 -ml-0.25 flex flex-col gap-0.5">
+					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
+					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
+					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
+					<div className="h-0.5 w-0.5 rounded-full bg-gray-600 transition-colors duration-300" />
+				</div>
 			</div>
 		</div>
 	);
