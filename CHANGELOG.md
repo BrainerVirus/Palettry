@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING CHANGE**: Refactored primary color concept to brand color throughout the application
+  - Changed `primaryColor` signal to `brandColor` in palette store
+  - Updated `setPrimaryColor` function to `setBrandColor`
+  - Changed tonal scale naming from `primary-*` to `brand-*` (e.g., `primary-500` → `brand-500`)
+  - Updated all design system exporters (DaisyUI, shadcn/ui, Tailwind V4) to use brand terminology
+  - Updated UI text from "Primary color" to "Brand color" in color input component
+  - Updated palette builder methods to use `brandColor` parameter naming
 - Renamed getAllMethods to generatePalette and updated return type to Palette
 - Updated palette store to use signals and enhanced palette generation logic
 - Renamed PaletteMethod interface to Palette for clarity
