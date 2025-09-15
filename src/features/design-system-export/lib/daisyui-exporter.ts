@@ -6,7 +6,7 @@ type CssVars = Record<string, string>;
 export class DaisyUIExporter {
 	private static lightVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors, baseScale } = method;
-		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
+		const brand500 = tonalScale.find((s) => s.scale === "brand-500");
 
 		return {
 			"--color-base-50": getBaseColor("base-50", baseScale, "oklch(99.5% 0.001 0)"),
@@ -15,11 +15,11 @@ export class DaisyUIExporter {
 			"--color-base-300": getBaseColor("base-300", baseScale, "oklch(95% 0 0)"),
 			"--color-base-content": getBaseForeground("base-900", baseScale, "oklch(21% 0.006 285.885)"),
 			"--color-primary": normalizeFull(
-				primary500?.color || "oklch(45% 0.24 277.023)",
+				brand500?.color || "oklch(45% 0.24 277.023)",
 				"oklch(45% 0.24 277.023)"
 			),
 			"--color-primary-content": normalizeFull(
-				primary500?.foreground || "oklch(93% 0.034 272.788)",
+				brand500?.foreground || "oklch(93% 0.034 272.788)",
 				"oklch(93% 0.034 272.788)"
 			),
 			"--color-secondary": findAndNormalize(
@@ -35,13 +35,13 @@ export class DaisyUIExporter {
 				"oklch(94% 0.028 342.258)"
 			),
 			"--color-accent": findAndNormalize(
-				"primary-300",
+				"brand-300",
 				tonalScale,
 				neutralScale,
 				"oklch(77% 0.152 181.912)"
 			),
 			"--color-accent-content": findAndNormalize(
-				"primary-900",
+				"brand-900",
 				tonalScale,
 				neutralScale,
 				"oklch(38% 0.063 188.416)"
@@ -91,7 +91,7 @@ export class DaisyUIExporter {
 
 	private static darkVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors, baseScale } = method;
-		const primary500 = tonalScale.find((s) => s.scale === "primary-500");
+		const brand500 = tonalScale.find((s) => s.scale === "brand-500");
 
 		return {
 			"--color-base-50": getBaseColor("base-50", baseScale, "oklch(99.5% 0.001 0)"),
@@ -104,11 +104,11 @@ export class DaisyUIExporter {
 				"oklch(97.807% 0.029 256.847)"
 			),
 			"--color-primary": normalizeFull(
-				primary500?.color || "oklch(58% 0.233 277.117)",
+				brand500?.color || "oklch(58% 0.233 277.117)",
 				"oklch(58% 0.233 277.117)"
 			),
 			"--color-primary-content": normalizeFull(
-				primary500?.foreground || "oklch(96% 0.018 272.314)",
+				brand500?.foreground || "oklch(96% 0.018 272.314)",
 				"oklch(96% 0.018 272.314)"
 			),
 			"--color-secondary": findAndNormalize(
@@ -124,13 +124,13 @@ export class DaisyUIExporter {
 				"oklch(94% 0.028 342.258)"
 			),
 			"--color-accent": findAndNormalize(
-				"primary-300",
+				"brand-300",
 				tonalScale,
 				neutralScale,
 				"oklch(77% 0.152 181.912)"
 			),
 			"--color-accent-content": findAndNormalize(
-				"primary-900",
+				"brand-900",
 				tonalScale,
 				neutralScale,
 				"oklch(38% 0.063 188.416)"
