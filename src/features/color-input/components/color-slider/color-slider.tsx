@@ -1,14 +1,15 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useCallback, useRef, useState } from "react";
+import { cn } from "@/features/shared/lib/utils";
 import {
+	generateChromaGradient,
 	generateHueGradient,
 	generateLightnessGradient,
-	generateChromaGradient,
-} from "../lib/color-input-utils";
-import { cn } from "@/features/shared/lib/utils";
+} from "@/features/color-input/lib/color-input-utils";
+// removed duplicate imports
 
 export type ColorSliderType = "hue" | "lightness" | "chroma";
 
-interface ColorSliderProps {
+export interface ColorSliderProps {
 	"type": ColorSliderType;
 	"value": number;
 	"min": number;

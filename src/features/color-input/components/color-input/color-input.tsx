@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { brandColor, setBrandColor } from "@/features/palette-generation/store/palette-store";
 import { effect, signal } from "@preact/signals-react";
@@ -7,7 +7,7 @@ import { Card } from "@/features/shared/components/card";
 // import { Button } from "@/features/shared/components/button";
 import { Input } from "@/features/shared/components/input";
 import { Label } from "@/features/shared/components/label";
-import { ColorSlider } from "./color-slider";
+import { ColorSlider } from "../color-slider";
 // import PresetSwatch from "@/features/shared/components/preset-swatch";
 import {
 	L_MIN,
@@ -27,7 +27,7 @@ const hSignal = signal<number>(240);
 const rawSignal = signal<string>("oklch(60% 0.18 240)");
 const errorSignal = signal<string | null>(null);
 
-export default function ColorInput() {
+export function ColorInput() {
 	useSignals();
 
 	// Debounced validation using effect
