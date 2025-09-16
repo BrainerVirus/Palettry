@@ -17,7 +17,7 @@ export interface ExportPanelProps {
 	palette: Palette | null;
 }
 
-export default function ExportPanel({ palette }: ExportPanelProps) {
+export function ExportPanel({ palette }: ExportPanelProps) {
 	useSignals();
 	const selectedExporter = selectedExporterSignal.value;
 
