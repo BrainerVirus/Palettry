@@ -6,7 +6,7 @@ export interface BadgeProps {
 	children: React.ReactNode;
 }
 
-export default function Badge({ variant = "default", className = "", children }: BadgeProps) {
+export function Badge({ variant = "default", className = "", children }: BadgeProps) {
 	const variants = {
 		default: "bg-primary text-primary-foreground hover:bg-primary/80",
 		secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
