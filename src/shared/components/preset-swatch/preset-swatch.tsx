@@ -1,7 +1,11 @@
 import React, { useMemo } from "react";
 import { ColorMath } from "@/core/palette/color-math";
 import { Button } from "@/shared/components/button";
-import type { PresetSwatchProps } from "@/features/color-input/types";
+
+export interface PresetSwatchProps {
+	value: string;
+	onSelect: (value: string) => void;
+}
 
 export function PresetSwatch({ value, onSelect }: PresetSwatchProps) {
 	const fg = useMemo(() => {
