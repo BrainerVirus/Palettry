@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import { cn } from "@/features/shared/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
 	generateChromaGradient,
 	generateHueGradient,
