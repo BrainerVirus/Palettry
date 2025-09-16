@@ -1,5 +1,5 @@
-import { Card } from "@/features/shared/components/card/card";
-import { Badge } from "@/features/shared/components/badge/badge";
+import { Card } from "@/shared/components/card/card";
+import { Badge } from "@/shared/components/badge/badge";
 import type { Palette } from "@/core/palette/types";
 
 export interface PaletteDisplayProps {
