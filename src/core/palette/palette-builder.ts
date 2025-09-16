@@ -9,7 +9,7 @@ import {
 import { NEUTRAL_CHROMA_STOPS } from "@/core/palette/scales/neutral-chroma-stops";
 import { BASE_SCALE_DEFINITIONS } from "@/core/palette/scales/base-scale-definitions";
 import { CHART_HUE_OFFSETS, CHART_TONE } from "@/core/palette/scales/chart-constants";
-import { normalizeHue } from "@/core/palette/utils";
+import { normalizeHue, clamp } from "@/core/palette/utils";
 
 export class PaletteBuilder {
 	static buildTonalScale(brandColor: string): ColorShade[] {
@@ -18,14 +18,14 @@ export class PaletteBuilder {
 			({ scale, l }: { scale: string; l: number }) => {
 				const currentL = baseL + l;
 				let adjustedChroma = baseC * Math.pow(currentL / baseL, 0.7);
-				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+				adjustedChroma = clamp(adjustedChroma, 0.005, 0.4);
 				if (currentL >= 90) adjustedChroma = 0.05;
 				else if (currentL >= 80) adjustedChroma = 0.08;
 				else if (currentL >= 70) adjustedChroma = 0.12;
 				else if (currentL >= 60) adjustedChroma = 0.2;
 				if (currentL <= 20) adjustedChroma = 0.08;
 				else if (currentL <= 28) adjustedChroma = 0.14;
-				adjustedChroma = ColorMath.clamp(adjustedChroma, 0.005, 0.4);
+				adjustedChroma = clamp(adjustedChroma, 0.005, 0.4);
 				const fg = ColorMath.getContrastingForegroundColor(
 					{ l: currentL, c: adjustedChroma, h: baseH },
 					4.5
@@ -77,8 +77,8 @@ export class PaletteBuilder {
 					C = Math.max(constraints.c[0], C * 0.95);
 				}
 
-				L = ColorMath.clamp(L, constraints.l[0], constraints.l[1]);
-				C = ColorMath.clamp(C, constraints.c[0], constraints.c[1]);
+				L = clamp(L, constraints.l[0], constraints.l[1]);
+				C = clamp(C, constraints.c[0], constraints.c[1]);
 			}
 
 			const inGamutColor = clampChroma(
