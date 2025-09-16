@@ -4,6 +4,7 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import astro from "eslint-plugin-astro";
 import prettier from "eslint-plugin-prettier";
+import pluginImport from "eslint-plugin-import";
 
 // parsers
 const tsParser = tseslint.parser;
@@ -50,9 +51,38 @@ export default defineConfig([
 				project: "./tsconfig.json",
 			},
 		},
+		plugins: {
+			import: pluginImport,
+		},
 		rules: {
 			"no-undef": "off", // Disable "not defined" errors for specific Astro types that are globally available (ImageMetadata)
 			"@typescript-eslint/no-explicit-any": "off", // you may want this as it can get annoying
+			"import/no-default-export": "error",
+		},
+	},
+
+	{
+		files: ["**/*.{ts,tsx,js,jsx}"],
+		plugins: {
+			import: pluginImport,
+		},
+		rules: {
+			"import/no-default-export": "error",
+			"import/prefer-default-export": "off",
+		},
+	},
+	{
+		files: [
+			"**/*config.{js,ts,cjs,mjs}",
+			"vite.config.*",
+			"astro.config.*",
+			"playwright.config.*",
+			"vitest.config.*",
+			"postcss.config.*",
+			"eslint.config.*",
+		],
+		rules: {
+			"import/no-default-export": "off",
 		},
 	},
 
