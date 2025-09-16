@@ -9,7 +9,7 @@ import {
 import { NEUTRAL_CHROMA_STOPS } from "@/core/palette/scales/neutral-chroma-stops";
 import { BASE_SCALE_DEFINITIONS } from "@/core/palette/scales/base-scale-definitions";
 import { CHART_HUE_OFFSETS, CHART_TONE } from "@/core/palette/scales/chart-constants";
-import { normalizeHue } from "@/core/palette/utils/hue";
+import { normalizeHue } from "@/core/palette/utils";
 
 export class PaletteBuilder {
 	static buildTonalScale(brandColor: string): ColorShade[] {

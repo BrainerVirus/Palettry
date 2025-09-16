@@ -1,3 +1,7 @@
+export function clamp(value: number, min: number, max: number): number {
+	return Math.max(min, Math.min(max, value));
+}
+
 /**
  * Normalize a hue angle to 0..360 while preserving an explicit 360 input (not wrapping to 0).
  */

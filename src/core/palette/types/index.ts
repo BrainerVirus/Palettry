@@ -1,5 +1,3 @@
-// Domain color + palette types (inlined; no re-export indirection)
-
 export interface OklchColor {
 	l: number;
 	c: number;
@@ -55,4 +53,7 @@ export interface LightnessProgression {
 	l: number;
 }
 
-export * from "./lightness"; // (LightnessProgression) retained for local separation if extended later
+export interface LightnessProgression {
+	scale: string;
+	l: number;
+}
