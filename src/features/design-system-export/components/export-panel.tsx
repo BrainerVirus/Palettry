@@ -1,13 +1,15 @@
 import React from "react";
-import { Card } from "@/features/shared/components/card";
-import { Button } from "@/features/shared/components/button";
+import { Card } from "@/shared/components/card";
+import { Button } from "@/shared/components/button";
 import { Copy } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/features/shared/components/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/tabs";
 
-import { ShadcnExporter, DaisyUIExporter, TailwindV4Exporter } from "@/core/export";
 import type { Palette } from "@/core/palette/types";
 import { signal } from "@preact/signals-react";
 import { useSignals } from "@preact/signals-react/runtime";
+import { DaisyUIExporter } from "@/core/export/daisyui";
+import { ShadcnExporter } from "@/core/export/shadcn";
+import { TailwindV4Exporter } from "@/core/export/tailwind";
 
 const selectedExporterSignal = signal<"shadcn" | "daisyui" | "tailwindv4">("shadcn");
 
