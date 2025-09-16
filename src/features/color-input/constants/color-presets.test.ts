@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { PRESETS } from "./color-presets";
-import { ColorMath } from "@/features/palette-generation/lib/color-math";
+import { ColorMath } from "@/core/palette/color-math";
 
 describe("color-presets", () => {
 	it("all presets are valid OKLCH strings parsable by ColorMath", () => {

@@ -2,24 +2,17 @@ import { useMemo, useRef } from "react";
 import { useSignals } from "@preact/signals-react/runtime";
 import { brandColor, setBrandColor } from "@/features/palette-generation/store/palette-store";
 import { effect, signal } from "@preact/signals-react";
-import { ColorMath } from "@/features/palette-generation/lib/color-math";
+import { ColorMath } from "@/core/palette/color-math";
 import { Card } from "@/features/shared/components/card";
 // import { Button } from "@/features/shared/components/button";
 import { Input } from "@/features/shared/components/input";
 import { Label } from "@/features/shared/components/label";
 import { ColorSlider } from "../color-slider";
 // import PresetSwatch from "@/features/shared/components/preset-swatch";
-import {
-	L_MIN,
-	L_MAX,
-	C_MIN,
-	C_MAX,
-	H_MIN,
-	H_MAX,
-} from "@/features/shared/constants/color-constraints";
+import { L_MIN, L_MAX, C_MIN, C_MAX, H_MIN, H_MAX } from "@/core/palette/scales/color-constraints";
 // import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
-import { clamp } from "@/features/shared/lib/utils";
+import { clamp } from "@/core/palette/utils/clamp";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);

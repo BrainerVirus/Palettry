@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
-	clamp,
-	normalizeHue,
 	generateHueGradient,
 	generateLightnessGradient,
 	generateChromaGradient,
 	getPreviewColors,
 } from "./color-input-utils";
+import { clamp } from "@/core/palette/utils/clamp";
+import { normalizeHue } from "@/core/palette/utils/hue";
 
 // Collocated unit tests for color-input utils
 

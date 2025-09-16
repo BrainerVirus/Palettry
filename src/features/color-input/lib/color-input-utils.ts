@@ -1,7 +1,5 @@
-import { ColorMath } from "@/features/palette-generation/lib/color-math";
-import { clamp, normalizeHue } from "@/features/shared/lib/utils";
+import { ColorMath } from "@/core/palette/color-math";
 
-export { clamp };
 export const formatOKLCH = (l: number, c: number, h: number) => ColorMath.formatOklch(l, c, h);
 
 export const getPreviewColors = (l: number, c: number, h: number) => {
@@ -16,8 +14,6 @@ export const getPreviewColors = (l: number, c: number, h: number) => {
 		return { bg: "transparent", fg: "currentColor" };
 	}
 };
-
-export { normalizeHue };
 
 // Generate OKLCH gradient for Hue slider (0-360°, fixed L and C)
 export function generateHueGradient(currentL: number, currentC: number): string {
