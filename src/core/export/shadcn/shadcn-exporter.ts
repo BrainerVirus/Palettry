@@ -1,5 +1,5 @@
-import type { Palette } from "@/features/shared/types/global";
-import { normalizeFull, findAndNormalize } from "./palette-utils";
+import type { Palette } from "@/core/palette/types";
+import { normalizeFull, findAndNormalize } from "@/core/export/utils/palette-utils";
 
 type CssVars = Record<string, string>;
 

@@ -1,5 +1,10 @@
-import type { Palette } from "@/features/shared/types/global";
-import { normalizeFull, findAndNormalize, getBaseColor, getBaseForeground } from "./palette-utils";
+import type { Palette } from "@/core/palette/types";
+import {
+	normalizeFull,
+	findAndNormalize,
+	getBaseColor,
+	getBaseForeground,
+} from "@/core/export/utils/palette-utils";
 
 type CssVars = Record<string, string>;
 
@@ -7,7 +12,6 @@ export class DaisyUIExporter {
 	private static lightVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors, baseScale } = method;
 		const brand500 = tonalScale.find((s) => s.scale === "brand-500");
-
 		return {
 			"--color-base-50": getBaseColor("base-50", baseScale, "oklch(99.5% 0.001 0)"),
 			"--color-base-100": getBaseColor("base-100", baseScale, "oklch(100% 0 0)"),
@@ -92,7 +96,6 @@ export class DaisyUIExporter {
 	private static darkVars(method: Palette): CssVars {
 		const { tonalScale, neutralScale, semanticColors, baseScale } = method;
 		const brand500 = tonalScale.find((s) => s.scale === "brand-500");
-
 		return {
 			"--color-base-50": getBaseColor("base-50", baseScale, "oklch(99.5% 0.001 0)"),
 			"--color-base-100": getBaseColor("base-900", baseScale, "oklch(25.33% 0.016 252.42)"),
@@ -191,10 +194,10 @@ export class DaisyUIExporter {
 			.map(([k, v]) => `  ${k}: ${v};`)
 			.join("\n");
 		return `@plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  prefersdark: false;
-  color-scheme: "light";
+	name: "light";
+	default: true;
+	prefersdark: false;
+	color-scheme: "light";
 ${lines}
 }`;
 	}
@@ -205,10 +208,10 @@ ${lines}
 			.map(([k, v]) => `  ${k}: ${v};`)
 			.join("\n");
 		return `@plugin "daisyui/theme" {
-  name: "dark";
-  default: false;
-  prefersdark: true;
-  color-scheme: "dark";
+	name: "dark";
+	default: false;
+	prefersdark: true;
+	color-scheme: "dark";
 ${lines}
 }`;
 	}

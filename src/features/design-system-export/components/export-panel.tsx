@@ -4,10 +4,8 @@ import { Button } from "@/features/shared/components/button";
 import { Copy } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/features/shared/components/tabs";
 
-import { ShadcnExporter } from "@/features/design-system-export/lib/shadcn-exporter";
-import { DaisyUIExporter } from "@/features/design-system-export/lib/daisyui-exporter";
-import { TailwindV4Exporter } from "@/features/design-system-export/lib/tailwind-v4-exporter";
-import type { Palette } from "@/features/shared/types/global";
+import { ShadcnExporter, DaisyUIExporter, TailwindV4Exporter } from "@/core/export";
+import type { Palette } from "@/core/palette/types";
 import { signal } from "@preact/signals-react";
 import { useSignals } from "@preact/signals-react/runtime";
 
