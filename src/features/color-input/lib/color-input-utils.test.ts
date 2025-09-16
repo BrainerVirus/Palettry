@@ -5,7 +5,8 @@ import {
 	generateChromaGradient,
 	getPreviewColors,
 } from "./color-input-utils";
-import { clamp, normalizeHue } from "@/core/palette/utils";
+import { clamp } from "@/core/palette/utils/clamp";
+import { normalizeHue } from "@/core/palette/utils/hue";
 
 // Collocated unit tests for color-input utils
 

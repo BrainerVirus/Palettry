@@ -9,10 +9,17 @@ import { Input } from "@/shared/components/input";
 import { Label } from "@/shared/components/label";
 import { ColorSlider } from "../color-slider";
 // import PresetSwatch from "@/features/shared/components/preset-swatch";
-import { L_MIN, L_MAX, C_MIN, C_MAX, H_MIN, H_MAX } from "@/core/palette/scales/color-constraints";
+import {
+	L_MIN,
+	L_MAX,
+	C_MIN,
+	C_MAX,
+	H_MIN,
+	H_MAX,
+} from "@/core/palette/constants/color-constraints";
 // import { PRESETS } from "@/features/color-input/constants/color-presets";
 import { formatOKLCH, getPreviewColors } from "@/features/color-input/lib/color-input-utils";
-import { clamp } from "@/core/palette/utils";
+import { clamp } from "@/core/palette/utils/clamp";
 
 const lSignal = signal<number>(60);
 const cSignal = signal<number>(0.18);

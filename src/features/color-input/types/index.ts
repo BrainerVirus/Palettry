@@ -5,8 +5,3 @@ export interface ColorInputState {
 	raw: string;
 	error: string | null;
 }
-
-export interface PresetSwatchProps {
-	value: string;
-	onSelect: (value: string) => void;
-}
