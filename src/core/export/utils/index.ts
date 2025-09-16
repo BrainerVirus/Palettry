@@ -1,7 +1,7 @@
 import { ColorMath } from "@/core/palette/color-math";
 import { clampChroma } from "culori";
 import type { ColorShade } from "@/core/palette/types";
-import { normalizeHue } from "@/core/palette/utils/hue";
+import { normalizeHue } from "@/core/palette/utils";
 
 type CssVars = Record<string, string>;
 

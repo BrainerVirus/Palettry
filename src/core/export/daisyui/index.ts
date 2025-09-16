@@ -4,7 +4,7 @@ import {
 	findAndNormalize,
 	getBaseColor,
 	getBaseForeground,
-} from "@/core/export/utils/palette-utils";
+} from "@/core/export/utils";
 
 type CssVars = Record<string, string>;
 
