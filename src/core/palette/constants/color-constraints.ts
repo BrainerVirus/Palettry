@@ -1,3 +1,4 @@
+// Moved from scales/color-constraints.ts
 export const L_MIN = 0;
 export const L_MAX = 100;
 export const C_MIN = 0;

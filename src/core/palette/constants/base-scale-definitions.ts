@@ -1,3 +1,4 @@
+// Moved from scales/base-scale-definitions.ts
 export const BASE_SCALE_DEFINITIONS = [
 	{ scale: "base-50", l: 100, c: 0 },
 	{ scale: "base-100", l: 99, c: 0.001 },

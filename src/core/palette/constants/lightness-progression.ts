@@ -1,5 +1,6 @@
 import type { LightnessProgression } from "@/core/palette/types";
 
+// Moved from scales/lightness-progression.ts
 export const PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP: LightnessProgression[] = [
 	{ scale: "50", l: 45.4 },
 	{ scale: "100", l: 40.4 },

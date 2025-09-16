@@ -1,15 +1,16 @@
 import { clampChroma } from "culori";
 import { ColorMath } from "@/core/palette/color-math";
 import type { ColorShade, SemanticColors, Palette } from "@/core/palette/types";
-import { SEMANTIC_HUE_CONSTRAINTS } from "@/core/palette/scales/hue-constraints";
+import { SEMANTIC_HUE_CONSTRAINTS } from "@/core/palette/constants/semantic-hue-constraints";
 import {
 	PRIMARY_COLORS_LIGHTNESS_PROGRESSION_MAP,
 	NEUTRAL_COLORS_LIGHTNESS_PROGRESSION_MAP,
-} from "@/core/palette/scales/lightness-progression";
-import { NEUTRAL_CHROMA_STOPS } from "@/core/palette/scales/neutral-chroma-stops";
-import { BASE_SCALE_DEFINITIONS } from "@/core/palette/scales/base-scale-definitions";
-import { CHART_HUE_OFFSETS, CHART_TONE } from "@/core/palette/scales/chart-constants";
-import { normalizeHue, clamp } from "@/core/palette/utils";
+} from "@/core/palette/constants/lightness-progression";
+import { NEUTRAL_CHROMA_STOPS } from "@/core/palette/constants/neutral-chroma-stops";
+import { BASE_SCALE_DEFINITIONS } from "@/core/palette/constants/base-scale-definitions";
+import { CHART_HUE_OFFSETS, CHART_TONE } from "@/core/palette/constants/chart-constants";
+import { clamp } from "@/core/palette/utils/clamp";
+import { normalizeHue } from "@/core/palette/utils/hue";
 
 export class PaletteBuilder {
 	static buildTonalScale(brandColor: string): ColorShade[] {

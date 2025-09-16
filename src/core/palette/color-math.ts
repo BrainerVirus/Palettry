@@ -1,7 +1,14 @@
 import type { OklchColor } from "@/core/palette/types";
-import { L_MIN, L_MAX, C_MIN, C_MAX, H_MIN, H_MAX } from "@/core/palette/scales/color-constraints";
 import { converter, wcagLuminance } from "culori";
-import { clamp } from "@/core/palette/utils";
+import { clamp } from "@/core/palette/utils/clamp";
+import {
+	L_MIN,
+	L_MAX,
+	C_MIN,
+	C_MAX,
+	H_MAX,
+	H_MIN,
+} from "@/core/palette/constants/color-constraints";
 
 // Converters from culori
 const oklchToRgb = converter("rgb"); // OKLCH object { l, c, h, mode: 'oklch' } to RGB object

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ColorMath } from "./color-math";
-import { clamp } from "@/core/palette/utils";
+import { clamp } from "@/core/palette/utils/clamp";
 
 describe("ColorMath", () => {
 	it("parses and formats OKLCH consistently", () => {
