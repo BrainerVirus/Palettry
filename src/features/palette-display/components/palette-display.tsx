@@ -1,13 +1,12 @@
-import React from "react";
-import Card from "@/features/shared/components/card/card";
-import Badge from "@/features/shared/components/badge/badge";
+import { Card } from "@/features/shared/components/card/card";
+import { Badge } from "@/features/shared/components/badge/badge";
 import type { Palette } from "@/features/shared/types/global";
 
 export interface PaletteDisplayProps {
 	palette: Palette;
 }
 
-export default function PaletteDisplay({ palette }: PaletteDisplayProps) {
+export function PaletteDisplay({ palette }: PaletteDisplayProps) {
 	return (
 		<Card>
 			<div className="space-y-4">
