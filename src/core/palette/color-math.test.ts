@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ColorMath } from "./color-math";
+import { clamp } from "@/core/palette/utils";
 
 describe("ColorMath", () => {
 	it("parses and formats OKLCH consistently", () => {
@@ -13,10 +14,10 @@ describe("ColorMath", () => {
 		expect(/oklch\(\d{1,3}\.\d%\s+\d\.\d{3}\s+\d{1,3}\.\d{2}\)/.test(formatted)).toBe(true);
 	});
 
-	it("clamps values within ranges", () => {
-		expect(ColorMath.clamp(200, 0, 100)).toBe(100);
-		expect(ColorMath.clamp(-10, 0, 100)).toBe(0);
-		expect(ColorMath.clamp(50, 0, 100)).toBe(50);
+	it("clamps values within ranges (utility)", () => {
+		expect(clamp(200, 0, 100)).toBe(100);
+		expect(clamp(-10, 0, 100)).toBe(0);
+		expect(clamp(50, 0, 100)).toBe(50);
 	});
 
 	it("returns a contrasting foreground (light or dark)", () => {

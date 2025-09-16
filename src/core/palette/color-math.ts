@@ -1,6 +1,7 @@
 import type { OklchColor } from "@/core/palette/types";
 import { L_MIN, L_MAX, C_MIN, C_MAX, H_MIN, H_MAX } from "@/core/palette/scales/color-constraints";
 import { converter, wcagLuminance } from "culori";
+import { clamp } from "@/core/palette/utils";
 
 // Converters from culori
 const oklchToRgb = converter("rgb"); // OKLCH object { l, c, h, mode: 'oklch' } to RGB object
@@ -36,8 +37,8 @@ export class ColorMath {
 	 */
 	static formatOklch(l: number, c: number, h: number): string {
 		// Ensure values are within typical ranges for formatting, even if clamped elsewhere
-		const clampedL = ColorMath.clamp(l, L_MIN, L_MAX);
-		const clampedC = ColorMath.clamp(c, C_MIN, C_MAX); // Max chroma is around 0.37 for sRGB gamut
+		const clampedL = clamp(l, L_MIN, L_MAX);
+		const clampedC = clamp(c, C_MIN, C_MAX); // Max chroma is around 0.37 for sRGB gamut
 		const normalizedH = h % H_MAX; // Ensure hue wraps around
 
 		return `oklch(${clampedL.toFixed(1)}% ${clampedC.toFixed(3)} ${normalizedH.toFixed(2)})`;
@@ -64,7 +65,7 @@ export class ColorMath {
 		// Adjust for currentL being outside baseL range
 		const lRatio = currentL / baseL;
 		const chroma = baseC * Math.pow(lRatio, 0.7);
-		return ColorMath.clamp(chroma, 0.005, 0.4); // Clamp to prevent out-of-gamut or too low chroma
+		return clamp(chroma, 0.005, 0.4); // Clamp to prevent out-of-gamut or too low chroma
 	}
 
 	/**
@@ -84,9 +85,6 @@ export class ColorMath {
 	/**
 	 * Clamp value between min and max
 	 */
-	static clamp(value: number, min: number, max: number): number {
-		return Math.min(Math.max(value, min), max);
-	}
 
 	/**
 	 * Calculates a foreground color (e.g., for text) that meets or exceeds the target
