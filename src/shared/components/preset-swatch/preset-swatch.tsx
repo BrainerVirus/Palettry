@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { ColorMath } from "@/core/palette/color-math";
-import { Button } from "@/features/shared/components/button";
+import { Button } from "@/shared/components/button";
 import type { PresetSwatchProps } from "@/features/color-input/types";
 
 export function PresetSwatch({ value, onSelect }: PresetSwatchProps) {
