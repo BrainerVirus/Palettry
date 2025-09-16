@@ -1,6 +1,6 @@
 import { signal, computed } from "@preact/signals-react";
-import { PaletteBuilder } from "@/features/palette-generation/lib/palette-builder";
-import type { Palette } from "@/features/shared/types/global";
+import { PaletteBuilder } from "@/core/palette/palette-builder";
+import type { Palette } from "@/core/palette/types";
 
 // Reactive signal for the brand color input
 export const brandColor = signal<string>("oklch(49.6% 0.272 303.89)");
