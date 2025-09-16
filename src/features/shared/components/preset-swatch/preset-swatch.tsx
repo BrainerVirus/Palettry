@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ColorMath } from "@/features/palette-generation/lib/color-math";
+import { ColorMath } from "@/core/palette/color-math";
 import { Button } from "@/features/shared/components/button";
 import type { PresetSwatchProps } from "@/features/color-input/types";
 

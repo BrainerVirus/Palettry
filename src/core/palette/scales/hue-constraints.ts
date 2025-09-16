@@ -1,4 +1,4 @@
-import type { SemanticHueConstraints } from "@/features/shared/types/global";
+import type { SemanticHueConstraints } from "@/core/palette/types";
 
 export const SEMANTIC_HUE_CONSTRAINTS: SemanticHueConstraints = {
 	success: { hue: 140, l: [45, 70], c: [0.12, 0.2] },

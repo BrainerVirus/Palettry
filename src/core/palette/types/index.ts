@@ -1,3 +1,5 @@
+// Domain color + palette types (inlined; no re-export indirection)
+
 export interface OklchColor {
 	l: number;
 	c: number;
@@ -47,3 +49,10 @@ export interface SemanticHueConstraints {
 	error: HueConstraint;
 	info: HueConstraint;
 }
+
+export interface LightnessProgression {
+	scale: string;
+	l: number;
+}
+
+export * from "./lightness"; // (LightnessProgression) retained for local separation if extended later
