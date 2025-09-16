@@ -1,1 +1,1 @@
-export { default } from "./preset-swatch";
+export { PresetSwatch } from "./preset-swatch";

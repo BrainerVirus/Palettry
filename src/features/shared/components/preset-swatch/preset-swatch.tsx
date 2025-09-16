@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { ColorMath } from "@/features/palette-generation/lib/color-math";
 import { Button } from "@/features/shared/components/button";
-import type { PresetSwatchProps } from "@/features/color-input/types/color-input";
+import type { PresetSwatchProps } from "@/features/color-input/types";
 
-export default function PresetSwatch({ value, onSelect }: PresetSwatchProps) {
+export function PresetSwatch({ value, onSelect }: PresetSwatchProps) {
 	const fg = useMemo(() => {
 		try {
 			const p = ColorMath.parseOklch(value);
